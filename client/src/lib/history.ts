@@ -44,9 +44,10 @@ export function restoreBoxData(
 ): Record<string, BoxData> {
   const out: Record<string, BoxData> = {};
   for (const [id, data] of Object.entries(snapshot)) {
-    if (current[id]?.status === "running") {
+    const liveStatus = current[id]?.status;
+    if (liveStatus === "running" || liveStatus === "queued") {
       out[id] = current[id];
-    } else if (data.status === "running") {
+    } else if (data.status === "running" || data.status === "queued") {
       out[id] = { ...data, status: data.output?.trim() ? "done" : "idle" };
     } else {
       out[id] = data;

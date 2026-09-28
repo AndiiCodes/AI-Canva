@@ -46,6 +46,7 @@ import { getUserEmail } from "../lib/admin.js";
 import { useTokenStore } from "./tokenStore.js";
 import { filterApproved } from "../lib/approvals.js";
 import { hashInput } from "../lib/inputHash.ts";
+import { pendingUpstream } from "../lib/queue.js";
 import { buildDemoBoard } from "../lib/demoBoard.js";
 import { detachFromFrames } from "../lib/areas.js";
 import { createHistory, isUserPatch, restoreBoxData } from "../lib/history.js";
@@ -301,6 +302,54 @@ interface BoardState {
   unshareBoard: (email: string) => Promise<void>;
   updateCursorPosition: (x: number, y: number) => void;
   cleanupPresence: () => void;
+}
+
+type UpstreamOutcome =
+  | { kind: "ready" }
+  | { kind: "cancelled" }
+  | { kind: "failed"; title: string };
+
+/**
+ * Resolves once every upstream box of a queued box has finished. Cancelled
+ * if the queued box is deleted or leaves the "queued" state; failed if an
+ * upstream box it was waiting on ends in an error.
+ */
+function waitForUpstream(id: string): Promise<UpstreamOutcome> {
+  return new Promise((resolve) => {
+    let waitingOn = new Set<string>();
+
+    const check = (): UpstreamOutcome | null => {
+      const { edges, boxData, nodes } = useBoardStore.getState();
+      if (boxData[id]?.status !== "queued") return { kind: "cancelled" };
+      for (const src of waitingOn) {
+        if (boxData[src]?.status === "error") {
+          const node = nodes.find((n) => n.id === src);
+          return {
+            kind: "failed",
+            title: (node?.data?.title as string) || "The previous box",
+          };
+        }
+      }
+      const pending = pendingUpstream(edges, boxData, id);
+      pending.forEach((src) => waitingOn.add(src));
+      // Stop tracking boxes that were disconnected meanwhile.
+      const upstream = new Set(
+        edges.filter((e) => e.target === id).map((e) => e.source),
+      );
+      waitingOn = new Set([...waitingOn].filter((src) => upstream.has(src)));
+      return pending.length === 0 ? { kind: "ready" } : null;
+    };
+
+    const first = check();
+    if (first) return resolve(first);
+    const unsubscribe = useBoardStore.subscribe(() => {
+      const outcome = check();
+      if (outcome) {
+        unsubscribe();
+        resolve(outcome);
+      }
+    });
+  });
 }
 
 export const useBoardStore = create<BoardState>()(
@@ -626,7 +675,12 @@ export const useBoardStore = create<BoardState>()(
         // boxes with interrupted generation will be flagged on load.
         Object.entries(board.boxData as Record<string, BoxData>).forEach(
           ([id, data]) => {
-            if (data.status === "running") {
+            if (data.status === "queued") {
+              get().updateBoxData(id, {
+                status: data.output?.trim() ? "done" : "idle",
+                error: undefined,
+              });
+            } else if (data.status === "running") {
               get().updateBoxData(id, {
                 output: "",
                 status: "error",
@@ -950,7 +1004,7 @@ export const useBoardStore = create<BoardState>()(
         const data = state.boxData[id];
 
         if (!node || !data) return;
-        if (data.status === "running") return;
+        if (data.status === "running" || data.status === "queued") return;
 
         const boxType = (node.data.boxType || node.type) as BoxType;
 
@@ -966,11 +1020,28 @@ export const useBoardStore = create<BoardState>()(
           return;
         }
 
+        // An upstream box is still generating: queue this one and run it
+        // once that input is ready, instead of failing for "no input".
+        if (pendingUpstream(state.edges, state.boxData, id).length > 0) {
+          get().setBoxStatus(id, "queued");
+          const outcome = await waitForUpstream(id);
+          if (outcome.kind === "cancelled") return;
+          if (outcome.kind === "failed") {
+            get().setBoxStatus(
+              id,
+              "error",
+              `"${outcome.title}" failed, so this box could not run. Fix it and try again.`,
+            );
+            return;
+          }
+        }
+
         // Gather upstream inputs
+        const latest = get();
         const { namedInputs } = collectInputs(
-          state.nodes,
-          state.edges,
-          state.boxData,
+          latest.nodes,
+          latest.edges,
+          latest.boxData,
           id,
         );
 
