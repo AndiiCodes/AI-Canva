@@ -42,7 +42,8 @@ const SAVE_LABEL: Record<string, string> = {
 };
 
 interface HeaderProps {
-  user: User;
+  /** null = signed-out local guest (sign-in disabled, see lib/authMode.ts). */
+  user: User | null;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   onShare: () => void;
@@ -103,7 +104,8 @@ function Header({
   ];
 
   const saveLabel = SAVE_LABEL[saveStatus];
-  const avatarInitials = (user.displayName || user.email || "?").slice(0, 2).toUpperCase();
+  const avatarInitials = (user?.displayName || user?.email || "?").slice(0, 2).toUpperCase();
+  const isGuest = !user;
 
   return (
     <header className="app-bar flex items-center justify-between gap-3 px-4 h-14 relative z-20">
@@ -120,7 +122,7 @@ function Header({
 
         <div className="h-6 w-px bg-line flex-shrink-0" />
 
-        {currentBoardId ? (
+        {currentBoardId || !user ? (
           <div className="flex items-center gap-2.5 min-w-0">
             <input
               type="text"
@@ -129,7 +131,15 @@ function Header({
               placeholder="Untitled board"
               className="h-[34px] w-48 md:w-56 rounded-lg border border-transparent bg-transparent px-2.5 text-[14px] font-semibold text-ink transition hover:bg-surface-sunken focus:border-line-control focus:bg-surface focus:outline-none focus:ring-2 focus:ring-[rgba(22,24,29,.12)]"
             />
-            {saveLabel && (
+            {!user && (
+              <span
+                className="font-mono text-[11px] text-ink-muted hidden md:block"
+                title="Sign-in is off: this board is saved in this browser only"
+              >
+                Saved in this browser
+              </span>
+            )}
+            {saveLabel && user && (
               <span
                 className="flex items-center gap-1.5 flex-shrink-0"
                 title={"Board save status: " + saveLabel}
@@ -146,8 +156,8 @@ function Header({
 
       {/* ---- Right: actions ---- */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {/* Collaboration group */}
-        {currentBoardId && (
+        {/* Collaboration group (cloud boards only) */}
+        {currentBoardId && user && (
           <>
             <PresenceRoster />
             <Button variant="primary" onClick={onShare} className="ml-1">
@@ -159,7 +169,7 @@ function Header({
 
         {/* Showcase reset: puts the board back to its starting state between
           visitors, restoring deleted boxes and clearing every decision. */}
-        {currentBoardId && isDemoBoard && (
+        {(currentBoardId || isGuest) && isDemoBoard && (
           <>
             {confirmingReset ? (
               <div className="flex items-center gap-1.5">
@@ -194,6 +204,9 @@ function Header({
           <PlusIcon /> Add Box
         </Button>
 
+        {/* Cloud boards + usage need an account — hidden for local guests. */}
+        {user && (
+        <>
         <Menu
           panelClassName="w-72"
           trigger={({ open, toggle }) => (
@@ -281,6 +294,8 @@ function Header({
           <BoltIcon /> <span className="font-semibold text-ink-3">{fmtTokens(totalTokens)}</span>
           <span className="hidden md:inline">tok</span>
         </div>
+        </>
+        )}
 
         {isAdmin && (
           <Button
@@ -337,6 +352,7 @@ function Header({
           )}
         </Menu>
 
+        {user && (
         <Menu
           panelClassName="w-60"
           trigger={({ open, toggle }) => (
@@ -384,6 +400,7 @@ function Header({
             </>
           )}
         </Menu>
+        )}
       </div>
     </header>
   );

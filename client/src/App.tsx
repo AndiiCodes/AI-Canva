@@ -22,6 +22,7 @@ import { signInWithGoogle, signOutUser } from "./lib/auth.js";
 import { isAdmin, updateUserProfile, heartbeat } from "./lib/admin.js";
 import { fetchUserTokenTotal } from "./lib/firestore.js";
 import { BOX_TYPES } from "./types.js";
+import { SIGN_IN_ENABLED } from "./lib/authMode.js";
 import type { BoxType } from "./types.js";
 
 export default function App() {
@@ -185,6 +186,12 @@ export default function App() {
     seedingRef.current = true;
     const state = useBoardStore.getState();
     if (state.nodes.length > 0) return;
+    // Sign-in disabled: guests start on the research demo board.
+    if (!SIGN_IN_ENABLED) {
+      useBoardStore.setState({ boardTitle: "Demo research canvas" });
+      useBoardStore.getState().resetDemoBoard();
+      return;
+    }
     const ideaId = addBox("text", { x: 80, y: 200 });
     useBoardStore.getState().updateBoxData(ideaId, {
       content:
@@ -300,7 +307,8 @@ export default function App() {
   };
 
   // Not logged in — show landing page with the workshop code entry.
-  if (!user) {
+  // (Skipped entirely while sign-in is disabled — see lib/authMode.ts.)
+  if (!user && SIGN_IN_ENABLED) {
     return (
       <div className="relative">
         <LandingPage />
@@ -380,9 +388,9 @@ export default function App() {
       />
 
       <div className="flex-1 relative">
-        {adminView ? (
+        {user && adminView ? (
           <AdminBoard user={user} onBack={() => setAdminView(false)} />
-        ) : facilitatorView ? (
+        ) : user && facilitatorView ? (
           <FacilitatorBoard
             user={user}
             onBack={() => setFacilitatorView(false)}
