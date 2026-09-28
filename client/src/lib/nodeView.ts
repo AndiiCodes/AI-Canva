@@ -241,3 +241,24 @@ export function smoothPath(pts: [number, number][]): string {
  * colour picker; used by the demo board's group captions.
  */
 export const GROUP_LABEL_COLOR = "transparent";
+
+/**
+ * What each box is for — shown in the tooltip above its icon (node header
+ * and the Add Box panel). Wording from the team's walkthrough script.
+ */
+export const BOX_USAGE: Partial<Record<BoxType, string>> = {
+  text:
+    "Start here with your research material: paste interview notes directly. For this demo, a few test transcripts are ready to use.",
+  documents:
+    "Start here with your research material: upload a TXT, PDF or Word document instead of pasting it.",
+  insight:
+    "Identifies the key themes from the research and keeps the supporting quotes with them, so you can see where each finding came from. If one theme looks off, you can rerun just that one.",
+  journey:
+    "Turns the findings into the patient journey and highlights where things went smoothly or where friction occurred.",
+  safety:
+    "Checks the journey for potential safety concerns and links each concern back to the evidence.",
+  coach:
+    "Suggests possible next steps for the researcher. These are recommendations only — the researcher still makes the final decision.",
+  summary:
+    "Brings the findings from every step of the pipeline together in one summary you can download as a PDF.",
+};

@@ -2,7 +2,7 @@ import { useBoardStore } from "../store/boardStore.js";
 import { BOX_TYPES } from "../types.js";
 import type { BoxType, BoxCategory } from "../types.js";
 import { useReactFlow } from "@xyflow/react";
-import { STEP_STYLE } from "../lib/nodeView.js";
+import { BOX_USAGE, STEP_STYLE } from "../lib/nodeView.js";
 import { BoxIcon, ChevronLeftIcon, CloseIcon } from "./ui/icons.js";
 
 interface SidebarProps {
@@ -88,7 +88,7 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
                       key={type}
                       onClick={() => handleAdd(type)}
                       className="palette-row w-full flex items-center gap-2.5 pl-2 pr-2.5 py-1.5 rounded-[9px] border border-transparent bg-surface text-left transition-colors hover:bg-surface-sunken"
-                      title={meta.description}
+                      title={BOX_USAGE[type] ?? meta.description}
                     >
                       <span
                         className={

@@ -107,8 +107,9 @@ function Header({
   const avatarInitials = (user?.displayName || user?.email || "?").slice(0, 2).toUpperCase();
   const isGuest = !user;
 
+  // z-30 on the header: above the Add Box panel (z-20) so its menus open over it.
   return (
-    <header className="app-bar flex items-center justify-between gap-3 px-4 h-14 relative z-20">
+    <header className="app-bar flex items-center justify-between gap-3 px-4 h-14 relative z-30">
       {/* ---- Left: brand + board identity ---- */}
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex items-center gap-2.5 flex-shrink-0">

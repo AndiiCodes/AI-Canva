@@ -221,6 +221,12 @@ select,
   box-shadow: var(--shadow-node);
   transition: box-shadow 0.15s ease;
 }
+/* Auto-height nodes (no stored height): fit the content, capped so a long
+   output scrolls inside the box instead of growing without limit. */
+.box-node.is-auto {
+  height: auto;
+  max-height: 860px;
+}
 .box-node.has-error {
   border-color: var(--red-border);
 }
@@ -326,6 +332,59 @@ select,
 [data-theme="dark"] .area-frame.is-neutral {
   background-color: var(--area-fill);
   border-color: var(--area-border);
+}
+
+/* Tooltip above a box icon (components/ui/Tooltip.tsx) */
+.tip {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  border-radius: 8px;
+  outline: none;
+  cursor: help;
+}
+.tip:focus-visible { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text-faint); }
+.tip-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: -6px;
+  z-index: 60;
+  width: max-content;
+  max-width: 280px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  white-space: normal;
+  box-shadow: var(--shadow-float);
+  opacity: 0;
+  transform: translateY(3px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.tip-bubble.is-end { left: auto; right: -6px; }
+.tip-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 16px;
+  border: 6px solid transparent;
+  border-top-color: var(--ink);
+}
+.tip-bubble.is-end::after { left: auto; right: 16px; }
+.tip:hover .tip-bubble,
+.tip:focus-visible .tip-bubble,
+.tip:focus .tip-bubble {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.15s;
 }
 
 /* Mono uppercase section label */

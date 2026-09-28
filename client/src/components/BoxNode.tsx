@@ -20,6 +20,7 @@ import JourneyMapperOutput from "./outputs/JourneyOutput.js";
 import SafetyReviewerOutput from "./outputs/SafetyOutputs.js";
 import CoachOutput from "./outputs/CoachOutput.js";
 import SummaryOutput, { useSummarySections } from "./outputs/SummaryOutput.js";
+import { Tooltip } from "./ui/Tooltip.js";
 import { Menu, MenuItem } from "./ui/Menu.js";
 import {
   AlertIcon,
@@ -37,6 +38,7 @@ import {
   BoxIcon,
 } from "./ui/icons.js";
 import {
+  BOX_USAGE,
   EMPTY_STATE_COPY,
   GROUP_LABEL_COLOR,
   STEP_STYLE,
@@ -257,6 +259,12 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   // The PDF Summary has no AI run of its own — it updates live from the
   // pipeline outputs — so it gets the shell but no Run / settings / footer.
   const isAIBox = !isInputBox && !isUtility && !isSummary;
+
+  // Auto-height: a node with no stored height grows to fit its content (up
+  // to a cap, then the body scrolls). Resizing it by hand stores a height,
+  // which pins it again.
+  const selfNode = allNodes.find((n) => n.id === id);
+  const autoHeight = !selfNode?.style?.height && !selfNode?.height;
   const step = STEP_STYLE[boxType];
   const title = (data.title as string) || meta.label + " Box";
   const docs = boxData.documents || [];
@@ -409,7 +417,10 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
       />
       <div
         className={
-          "box-node" + (selected ? " selected" : "") + (hasError ? " has-error" : "")
+          "box-node" +
+          (selected ? " selected" : "") +
+          (hasError ? " has-error" : "") +
+          (autoHeight ? " is-auto" : "")
         }
       >
         {/* Target handle (input) — AI boxes only (not input/utility boxes).
@@ -425,17 +436,19 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
 
         {/* Header: tile · title / subtitle · status pill · ⋯ menu */}
         <div className="node-header">
-          <span
-            className={
-              "node-tile" +
-              (step ? (step.ink ? " is-ink" : "") : " is-participant") +
-              (tileEmpty ? " is-empty" : "")
-            }
-            style={{ background: identity }}
-            aria-hidden
-          >
-            {tileText(boxType, title) ?? <BoxIcon type={boxType} />}
-          </span>
+          <Tooltip text={BOX_USAGE[boxType]}>
+            <span
+              className={
+                "node-tile" +
+                (step ? (step.ink ? " is-ink" : "") : " is-participant") +
+                (tileEmpty ? " is-empty" : "")
+              }
+              style={{ background: identity }}
+              aria-hidden
+            >
+              {tileText(boxType, title) ?? <BoxIcon type={boxType} />}
+            </span>
+          </Tooltip>
 
           <div className="flex-1 min-w-0">
             {isEditingName ? (

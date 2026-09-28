@@ -11,7 +11,7 @@ import {
 } from "@xyflow/react";
 import { useBoardStore } from "../store/boardStore.js";
 import { AREA_COLORS } from "../types.js";
-import { isValidAreaSize, normalizeRect } from "../lib/areas.js";
+import { fitGroupFrames, isValidAreaSize, normalizeRect } from "../lib/areas.js";
 import { Button } from "./ui/Button.js";
 import { SquareIcon } from "./ui/icons.js";
 import { STEP_HEX } from "../lib/nodeView.js";
@@ -46,6 +46,20 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
   const cleanupPresence = useBoardStore((s) => s.cleanupPresence);
   const boxData = useBoardStore((s) => s.boxData);
   const colorMode = useTheme((s) => s.resolved);
+  // Display-only node tweaks:
+  //  - group frames that hug their boxes (demo board);
+  //  - stacking: React Flow's own "raise the selected node" is off
+  //    (elevateNodesOnSelect below) because it lifted a selected area over
+  //    the boxes inside it. Selected boxes are raised here instead, and areas
+  //    always stay underneath (their handles/colour picker sit on or above
+  //    the frame edge, so they remain reachable).
+  const displayNodes = useMemo(
+    () =>
+      fitGroupFrames(nodes).map((n) =>
+        n.type !== "area" && n.selected ? { ...n, zIndex: 1000 } : n,
+      ),
+    [nodes],
+  );
 
   // Connectors that carry nothing yet (their source step hasn't run) are
   // drawn dashed ("waiting"). Presentation only: the stored edges are passed
@@ -198,8 +212,9 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
 
   return (
     <ReactFlow
-      nodes={nodes}
+      nodes={displayNodes}
       edges={styledEdges}
+      elevateNodesOnSelect={false}
       nodeTypes={nodeTypes}
       colorMode={colorMode}
       onNodesChange={onNodesChange}

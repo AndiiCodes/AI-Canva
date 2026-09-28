@@ -2,6 +2,7 @@ import type { Edge, Node } from "@xyflow/react";
 import { BOX_TYPES } from "../types.js";
 import type { BoxData, BoxDocument, BoxType } from "../types.js";
 import { GROUP_LABEL_COLOR } from "./nodeView.js";
+import { NEUTRAL_AREA } from "./areas.js";
 
 import p1 from "../fixtures/transcripts/participant-p1.txt?raw";
 import p2 from "../fixtures/transcripts/participant-p2.txt?raw";
@@ -70,13 +71,15 @@ const PIPELINE_GROUP_Y = INPUT_GROUP_Y;
 const PIPELINE_X = PIPELINE_GROUP_X + PIPELINE_GROUP_PAD;
 const PIPELINE_Y = PIPELINE_GROUP_Y + GROUP_HEADER;
 const PIPELINE_STEP_GAP = 72;
-const PIPELINE_HEIGHT = 640;
+/** Pipeline nodes are auto-height (capped at 860px by .box-node.is-auto);
+ *  the frame is sized for the cap so a fully grown box still fits. */
+const PIPELINE_HEIGHT = 860;
 /** Node widths per step, from the design reference. */
 const PIPELINE_WIDTH: Partial<Record<BoxType, number>> = {
-  insight: 380,
-  journey: 500,
-  safety: 400,
-  coach: 400,
+  insight: 440,
+  journey: 600,
+  safety: 460,
+  coach: 460,
 };
 
 function node(
@@ -145,7 +148,7 @@ const PIPELINE_GROUP_WIDTH =
 const PIPELINE_GROUP_HEIGHT = GROUP_HEADER + PIPELINE_HEIGHT + PIPELINE_GROUP_PAD;
 
 /** The summary document closes the pipeline in its own frame, header aligned. */
-const SUMMARY_WIDTH = 520;
+const SUMMARY_WIDTH = 560;
 const SUMMARY_AREA_WIDTH = SUMMARY_WIDTH + PIPELINE_GROUP_PAD * 2;
 const SUMMARY_AREA_HEIGHT = PIPELINE_GROUP_HEIGHT;
 const SUMMARY_AREA_X = PIPELINE_GROUP_X + PIPELINE_GROUP_WIDTH + GROUP_GAP;
@@ -156,10 +159,10 @@ const SUMMARY_AREA_Y = PIPELINE_GROUP_Y;
  * browser holding an older copy of the demo (guest mode, see App.tsx) is
  * switched to the current one.
  */
-export const DEMO_VERSION = 3;
+export const DEMO_VERSION = 4;
 
 /** Neutral group-frame fill/border (design tokens group-fill / group-border). */
-const GROUP_FRAME = { fill: "rgba(255,255,255,0.45)", border: "rgba(22,24,29,0.1)" };
+const GROUP_FRAME = { fill: NEUTRAL_AREA.fill, border: NEUTRAL_AREA.border };
 /** Captions sit centred in the 46px header row of their frame. */
 const CAPTION_OFFSET = { x: 16, y: 11 };
 
@@ -195,12 +198,15 @@ export function buildDemoBoard(): DemoBoard {
     });
   }
 
+  // `fit` lets Canvas grow/shrink the frame around its boxes as they
+  // resize (see fitGroupFrames); width/height here are the starting size.
   function groupFrame(
     id: string,
     x: number,
     y: number,
     width: number,
     height: number,
+    fit: { ids: string[]; pad: number },
   ): void {
     nodes.push({
       id,
@@ -208,7 +214,7 @@ export function buildDemoBoard(): DemoBoard {
       position: { x, y },
       style: { width, height },
       zIndex: -1,
-      data: { ...GROUP_FRAME },
+      data: { ...GROUP_FRAME, fit },
     });
   }
 
@@ -218,6 +224,7 @@ export function buildDemoBoard(): DemoBoard {
     INPUT_GROUP_Y,
     INPUT_GROUP_WIDTH,
     INPUT_GROUP_HEIGHT,
+    { ids: [...TRANSCRIPTS.map((t) => t.id), DOCUMENT_TRANSCRIPT.id], pad: INPUT_GROUP_PAD },
   );
   groupFrame(
     "demo-pipeline-area",
@@ -225,6 +232,7 @@ export function buildDemoBoard(): DemoBoard {
     PIPELINE_GROUP_Y,
     PIPELINE_GROUP_WIDTH,
     PIPELINE_GROUP_HEIGHT,
+    { ids: PIPELINE.map((b) => b.id), pad: PIPELINE_GROUP_PAD },
   );
   groupFrame(
     "demo-summary-area",
@@ -232,6 +240,7 @@ export function buildDemoBoard(): DemoBoard {
     SUMMARY_AREA_Y,
     SUMMARY_AREA_WIDTH,
     SUMMARY_AREA_HEIGHT,
+    { ids: ["demo-summary"], pad: PIPELINE_GROUP_PAD },
   );
 
   labelNode(
@@ -283,7 +292,7 @@ export function buildDemoBoard(): DemoBoard {
         `${BOX_TYPES[box.type].label} Box`,
         pipelineX,
         PIPELINE_Y,
-        { width, height: PIPELINE_HEIGHT },
+        { width },
       ),
     );
     data[box.id] = boxData(box.type);
@@ -306,7 +315,7 @@ export function buildDemoBoard(): DemoBoard {
       `${BOX_TYPES.summary.label} Box`,
       SUMMARY_AREA_X + PIPELINE_GROUP_PAD,
       PIPELINE_Y,
-      { width: SUMMARY_WIDTH, height: PIPELINE_HEIGHT },
+      { width: SUMMARY_WIDTH },
     ),
   );
   data["demo-summary"] = boxData("summary");

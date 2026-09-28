@@ -361,9 +361,8 @@ export const useBoardStore = create<BoardState>()(
           type: "area",
           position: { x: rect.x, y: rect.y },
           style: { width: rect.width, height: rect.height },
-          // Areas render BELOW all boxes (default node z is 0; React Flow
-          // elevates the selected node by 1000 so a selected area's color
-          // dots stay reachable even where boxes overlap it).
+          // Areas render BELOW all boxes (default node z is 0), even when
+          // selected — see the stacking note in Canvas.tsx.
           zIndex: -1,
           data: { fill, border },
         };

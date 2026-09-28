@@ -38,8 +38,14 @@ const SENTIMENT_LABEL: Record<string, string> = {
 };
 
 /** Chart geometry (viewBox units; the SVG scales to the node width). */
-const CHART_W = 468;
+const CHART_MIN_W = 468;
 const CHART_H = 168;
+/**
+ * Minimum width per stage column (px). With many stages the chart keeps
+ * this spacing and scrolls sideways inside the box instead of squashing
+ * the labels together.
+ */
+const MIN_STAGE_W = 96;
 const PAD_TOP = 26;
 const PAD_BOTTOM = 30;
 
@@ -86,6 +92,7 @@ export default function JourneyMapperOutput({
   const friction = stages.map(stageHasFriction);
   const frictionCount = friction.filter(Boolean).length;
   const bands = contiguousRuns(friction);
+  const CHART_W = Math.max(CHART_MIN_W, n * MIN_STAGE_W);
   const colW = CHART_W / n;
   const usable = CHART_H - PAD_TOP - PAD_BOTTOM;
   const points: [number, number][] = stages.map((s, i) => [
@@ -104,7 +111,9 @@ export default function JourneyMapperOutput({
     <div className="nowheel px-4 pt-3.5">
       <div className="mono-label mb-2">Emotion by stage</div>
 
-      <div className="relative">
+      {/* Horizontal scroll only when the stages need more room than the box. */}
+      <div className="nodrag overflow-x-auto -mx-4 px-4">
+      <div className="relative" style={{ minWidth: n * MIN_STAGE_W }}>
         {/* Friction band(s): one per run of contiguous friction stages,
           from the chart top through the stage labels. */}
         {bands.map(([a, b], k) => (
@@ -168,8 +177,15 @@ export default function JourneyMapperOutput({
           {n > 1 && (
             <text
               x={points[lowest][0]}
-              y={Math.min(points[lowest][1] + 25, CHART_H - 4)}
-              textAnchor="middle"
+              // Below the point when there's room, otherwise above it, so the
+              // label never sits on the curve or the axis.
+              y={
+                points[lowest][1] + 22 <= CHART_H - 6
+                  ? points[lowest][1] + 22
+                  : points[lowest][1] - 12
+              }
+              // Keep it inside the chart at the first / last column.
+              textAnchor={lowest === 0 ? "start" : lowest === n - 1 ? "end" : "middle"}
               style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, fill: "var(--meta-text)" }}
             >
               Lowest point
@@ -189,17 +205,24 @@ export default function JourneyMapperOutput({
               <span className="font-mono text-[10.5px] text-ink-faint">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <span className="text-[12.5px] font-semibold leading-[1.3] text-ink break-words">
+              <span
+                className="text-[12.5px] font-semibold leading-[1.3] text-ink break-words line-clamp-2"
+                title={stage.stage_name}
+              >
                 {stage.stage_name}
               </span>
               {stage.emotion && (
-                <span className="font-mono text-[10.5px] tracking-[.05em] uppercase text-ink-3 break-words">
+                <span
+                  className="font-mono text-[10.5px] tracking-[.05em] uppercase text-ink-3 break-words line-clamp-2"
+                  title={stage.emotion}
+                >
                   {stage.emotion}
                 </span>
               )}
             </div>
           ))}
         </div>
+      </div>
       </div>
 
       {/* Stage list — the existing expandable detail. */}

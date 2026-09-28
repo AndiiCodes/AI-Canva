@@ -384,7 +384,7 @@ export default function App() {
   // Logged in — show the app. `app-shell` scopes the dark-mode mapping in
   // index.css to the app (the landing page keeps its own look).
   return (
-    <div className="app-shell flex flex-col h-full w-full bg-canvas text-ink">
+    <div className="app-shell flex flex-col h-full w-full overflow-hidden bg-canvas text-ink">
       <Header
         user={user}
         sidebarOpen={sidebarOpen}
@@ -403,7 +403,9 @@ export default function App() {
         onToggleFacilitatorView={handleToggleFacilitatorView}
       />
 
-      <div className="flex-1 relative">
+      {/* overflow-hidden: the Add Box panel slides off-screen to the right
+        when closed; without clipping it widens the page and adds scrollbars. */}
+      <div className="flex-1 min-h-0 relative overflow-hidden">
         {user && adminView ? (
           <AdminBoard user={user} onBack={() => setAdminView(false)} />
         ) : user && facilitatorView ? (
