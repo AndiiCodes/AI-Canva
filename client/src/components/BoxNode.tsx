@@ -438,12 +438,8 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
         <div className="node-header">
           <Tooltip text={BOX_USAGE[boxType]}>
             <span
-              className={
-                "node-tile" +
-                (step ? (step.ink ? " is-ink" : "") : " is-participant") +
-                (tileEmpty ? " is-empty" : "")
-              }
-              style={{ background: identity }}
+              className={"node-tile" + (tileEmpty ? " is-empty" : "")}
+              style={{ "--tile-color": identity } as React.CSSProperties}
               aria-hidden
             >
               {tileText(boxType, title) ?? <BoxIcon type={boxType} />}

@@ -47,6 +47,7 @@ import { useTokenStore } from "./tokenStore.js";
 import { filterApproved } from "../lib/approvals.js";
 import { hashInput } from "../lib/inputHash.ts";
 import { buildDemoBoard } from "../lib/demoBoard.js";
+import { detachFromFrames } from "../lib/areas.js";
 
 function makeId(): string {
   return `box-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -225,6 +226,8 @@ interface BoardState {
     border: string,
   ) => string;
   setAreaColor: (id: string, fill: string, border: string) => void;
+  /** Takes a box out of any group frame that auto-fits around it. */
+  detachFromArea: (boxId: string) => void;
   setBoxName: (id: string, name: string) => void;
   deleteBox: (id: string) => void;
   runBox: (id: string) => Promise<void>;
@@ -377,6 +380,14 @@ export const useBoardStore = create<BoardState>()(
             n.id === id ? { ...n, data: { ...n.data, fill, border } } : n,
           ),
         });
+        scheduleSave();
+      },
+
+      detachFromArea: (boxId) => {
+        const nodes = get().nodes;
+        const next = detachFromFrames(nodes, boxId);
+        if (next === nodes) return;
+        set({ nodes: next });
         scheduleSave();
       },
 

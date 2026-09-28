@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_AREA_SIZE, fitGroupFrames, isValidAreaSize, normalizeRect } from "./areas.js";
+import { MIN_AREA_SIZE, detachFromFrames, fitGroupFrames, isValidAreaSize, normalizeRect } from "./areas.js";
 
 describe("normalizeRect", () => {
   it("anchors top-left for a left→right, up→down drag", () => {
@@ -85,5 +85,18 @@ describe("fitGroupFrames", () => {
   it("keeps the stored size until the boxes are measured", () => {
     const nodes = [frame, { id: "a", position: { x: 20, y: 46 } }];
     expect(fitGroupFrames(nodes as any)[0]).toBe(frame);
+  });
+});
+
+describe("detachFromFrames", () => {
+  const frame = { id: "f", data: { fill: "x", fit: { ids: ["a", "b"], pad: 20 } } };
+  it("removes the box from frames that hug it", () => {
+    const out = detachFromFrames([frame, { id: "a" }], "a");
+    expect((out[0] as any).data.fit.ids).toEqual(["b"]);
+    expect((out[0] as any).data.fill).toBe("x");
+  });
+  it("returns the same array when the box isn't in any frame", () => {
+    const nodes = [frame, { id: "z" }];
+    expect(detachFromFrames(nodes, "z")).toBe(nodes);
   });
 });

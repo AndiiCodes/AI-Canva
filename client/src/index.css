@@ -11,7 +11,9 @@
    else is neutral grey. oklch values with hex fallbacks first. */
 :root {
   --canvas-bg: #eef0f3;
-  --canvas-dot: rgba(22, 24, 29, 0.14);
+  --canvas-dot: rgba(22, 24, 29, 0.24);
+  /* Faint major grid (every 5 dots) so the background reads as a canvas */
+  --canvas-grid: rgba(22, 24, 29, 0.06);
   --surface: #ffffff;
   --surface-sunken: #f6f7f9;
   --surface-muted: #f1f3f5;
@@ -105,7 +107,8 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --canvas-bg: #111317;
-  --canvas-dot: rgba(255, 255, 255, 0.09);
+  --canvas-dot: rgba(255, 255, 255, 0.16);
+  --canvas-grid: rgba(255, 255, 255, 0.045);
   --surface: #1a1d22;
   --surface-sunken: #22262c;
   --surface-muted: #272b32;
@@ -257,24 +260,28 @@ select,
   border-top: 1px solid var(--divider);
 }
 
-/* Number / participant tile */
+/* Header tile: a soft tint of the box's identity colour (--tile-color, set
+   inline) with the icon / participant code drawn in that colour. Neutral
+   boxes (participants, PDF Summary, collaboration) use ink, which gives a
+   grey tint with dark text — and the reverse in dark mode. */
 .node-tile {
-  width: 30px;
-  height: 30px;
+  --tile-color: var(--ink);
+  width: 32px;
+  height: 32px;
   flex: none;
   box-sizing: border-box;
-  border-radius: 8px;
+  border-radius: 9px;
   display: grid;
   place-items: center;
-  color: #fff; /* white on the step colours in both themes */
+  color: var(--tile-color);
+  background: color-mix(in srgb, var(--tile-color) 11%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--tile-color) 20%, var(--surface));
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 600;
 }
-.node-tile.is-participant { font-size: 11.5px; color: var(--on-ink); }
-.node-tile.is-ink { color: var(--on-ink); }
 .node-tile.is-empty {
-  background: var(--surface) !important;
+  background: var(--surface);
   border: 1.5px dashed var(--edge-waiting);
   color: var(--text-muted);
 }

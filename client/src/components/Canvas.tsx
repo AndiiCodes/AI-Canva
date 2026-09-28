@@ -46,6 +46,17 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
   const cleanupPresence = useBoardStore((s) => s.cleanupPresence);
   const boxData = useBoardStore((s) => s.boxData);
   const colorMode = useTheme((s) => s.resolved);
+  const detachFromArea = useBoardStore((s) => s.detachFromArea);
+
+  // Ctrl+drag (⌘+drag on Mac) a box to take it out of its group frame, so
+  // the frame stops stretching after it.
+  const onNodeDragStart = useCallback(
+    (e: MouseEvent | TouchEvent, node: Node) => {
+      if (node.type === "area") return;
+      if (e.ctrlKey || e.metaKey) detachFromArea(node.id);
+    },
+    [detachFromArea]
+  );
   // Display-only node tweaks:
   //  - group frames that hug their boxes (demo board);
   //  - stacking: React Flow's own "raise the selected node" is off
@@ -215,6 +226,10 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
       nodes={displayNodes}
       edges={styledEdges}
       elevateNodesOnSelect={false}
+      onNodeDragStart={onNodeDragStart}
+      // Multi-select is Shift+click (React Flow's default is Ctrl/⌘), so that
+      // Ctrl/⌘ is free for "drag a box out of its frame" above.
+      multiSelectionKeyCode="Shift"
       nodeTypes={nodeTypes}
       colorMode={colorMode}
       onNodesChange={onNodesChange}
@@ -242,12 +257,23 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
       // box's own scrolling). Zooming still works over empty canvas space.
       noWheelClassName="react-flow__node"
     >
+      {/* Canvas background: a faint square grid every 5 cells, with a dot at
+        every cell — graph paper, so the board reads as a canvas. */}
       <Background
+        id="grid-major"
+        variant={BackgroundVariant.Lines}
+        gap={110}
+        lineWidth={1}
+        color="var(--canvas-grid)"
+        bgColor="var(--canvas-bg)"
+      />
+      <Background
+        id="grid-dots"
         variant={BackgroundVariant.Dots}
         gap={22}
-        size={1}
+        size={2.2}
         color="var(--canvas-dot)"
-        bgColor="var(--canvas-bg)"
+        bgColor="transparent"
       />
       <Controls position="bottom-center" orientation="horizontal" />
       <Cursors />

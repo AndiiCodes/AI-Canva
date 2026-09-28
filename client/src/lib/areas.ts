@@ -91,3 +91,22 @@ export function fitGroupFrames<
     return { ...frame, style: { ...frame.style, width, height } };
   });
 }
+
+/**
+ * Takes a box out of every group frame that hugs it (removes its id from
+ * `data.fit.ids`), so the frame stops following it and shrinks back around
+ * the boxes that remain. Returns the same array when nothing changed.
+ */
+export function detachFromFrames<N extends { id: string; data?: any }>(
+  nodes: N[],
+  boxId: string,
+): N[] {
+  let changed = false;
+  const next = nodes.map((n) => {
+    const fit = n.data?.fit as { ids: string[]; pad: number } | undefined;
+    if (!fit || !fit.ids.includes(boxId)) return n;
+    changed = true;
+    return { ...n, data: { ...n.data, fit: { ...fit, ids: fit.ids.filter((i) => i !== boxId) } } };
+  });
+  return changed ? next : nodes;
+}

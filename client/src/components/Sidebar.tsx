@@ -91,15 +91,12 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
                       title={BOX_USAGE[type] ?? meta.description}
                     >
                       <span
-                        className={
-                          "node-tile !w-7 !h-7 !rounded-[7px] !text-[12px]" +
-                          (STEP_STYLE[type]
-                            ? STEP_STYLE[type]?.ink
-                              ? " is-ink"
-                              : ""
-                            : " is-participant")
+                        className="node-tile !w-7 !h-7 !rounded-[8px]"
+                        style={
+                          {
+                            "--tile-color": STEP_STYLE[type]?.color ?? "var(--ink)",
+                          } as React.CSSProperties
                         }
-                        style={{ background: STEP_STYLE[type]?.color ?? "var(--ink)" }}
                         aria-hidden
                       >
                         <BoxIcon type={type} size={15} />
