@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { DownloadIcon } from "../ui/icons";
-import { jsPDF } from "jspdf";
+import { buildSummaryPdf } from "../../lib/summaryPdf";
 import { useBoardStore } from "../../store/boardStore";
 
 type BoxType = "insight" | "journey" | "safety" | "coach";
@@ -188,102 +188,7 @@ export default function SummaryNode({ sections }: SummaryNodeProps) {
       return;
     }
 
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    const margin = 20;
-    const contentWidth = pageWidth - margin * 2;
-
-    let y = 24;
-
-    const addPageIfNeeded = (height: number) => {
-      if (y + height > pageHeight - 20) {
-        pdf.addPage();
-        y = 24;
-      }
-    };
-
-    // Header
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(22);
-    pdf.setTextColor(15, 23, 42);
-
-    pdf.text("Research Summary", margin, y);
-
-    y += 8;
-
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(10);
-    pdf.setTextColor(100, 116, 139);
-
-    pdf.text("Latest findings from your research pipeline", margin, y);
-
-    y += 12;
-
-    pdf.setDrawColor(226, 232, 240);
-    pdf.line(margin, y, pageWidth - margin, y);
-
-    y += 12;
-
-    sections.forEach((section) => {
-      addPageIfNeeded(20);
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11);
-      pdf.setTextColor(100, 116, 139);
-
-      pdf.text(section.title.toUpperCase(), margin, y);
-
-      y += 7;
-
-      section.items.forEach((item) => {
-        const lines = pdf.splitTextToSize(item, contentWidth - 7);
-        const itemHeight = lines.length * 5 + 4;
-
-        addPageIfNeeded(itemHeight);
-
-        pdf.setFillColor(148, 163, 184);
-        pdf.circle(margin + 1.5, y - 1.5, 1.2, "F");
-
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(10.5);
-        pdf.setTextColor(51, 65, 85);
-
-        pdf.text(lines, margin + 7, y);
-
-        y += itemHeight;
-      });
-
-      y += 6;
-    });
-
-    // Footer / page numbers
-    const pageCount = pdf.getNumberOfPages();
-
-    for (let page = 1; page <= pageCount; page += 1) {
-      pdf.setPage(page);
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8);
-      pdf.setTextColor(148, 163, 184);
-
-      pdf.text(
-        `Research Summary • ${page} / ${pageCount}`,
-        pageWidth / 2,
-        pageHeight - 10,
-        {
-          align: "center",
-        },
-      );
-    }
-
-    pdf.save("research-summary.pdf");
+    buildSummaryPdf(sections).save("research-summary.pdf");
   };
 
   if (sections.length === 0) {
