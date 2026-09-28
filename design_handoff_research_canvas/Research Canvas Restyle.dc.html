@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#D5D8DD;font-family:'Instrument Sans',system-ui,sans-serif;color:#16181D;-webkit-font-smoothing:antialiased}
+a{color:#16181D}a:hover{color:oklch(0.5 0.13 250)}
+button{font:inherit}
+</style>
+</helmet>
+<section style="padding:72px; display:flex; flex-direction:column; gap:20px;">
+<div style="display:flex; align-items:center; gap:12px;">
+<span style="font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; background:#16181D; color:#FFFFFF; padding:4px 9px; border-radius:6px;">1a</span>
+<span style="font-size:18px; font-weight:600;">Research canvas restyle</span>
+<span style="font-size:14px; color:#565B64;">Boxes, headers and colour applied to the current pipeline</span>
+</div>
+<div id="1a" style="display:flex; gap:56px; align-items:flex-start;">
+
+<div style="width:2400px; height:1080px; flex:none; position:relative; overflow:hidden; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,.1), 0 24px 60px -20px rgba(0,0,0,.25); background:#EEF0F3; display:flex; flex-direction:column;">
+<header style="height:56px; flex:none; box-sizing:border-box; display:flex; align-items:center; gap:12px; padding:0 20px; background:#FFFFFF; border-bottom:1px solid #DDE0E5;">
+<span style="font-size:14px; font-weight:600;">Research canvas</span>
+<div style="flex:1;"></div>
+<button style="height:34px; padding:0 14px; display:flex; align-items:center; gap:7px; border:1px solid #D3D7DD; background:#FFFFFF; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; color:#16181D;" style-hover="background:#F3F4F6">Export</button>
+<button style="height:34px; padding:0 14px; display:flex; align-items:center; gap:7px; border:none; background:#16181D; color:#FFFFFF; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;" style-hover="background:#2D3038"><svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor;"><path d="M7 4.5v15l12.5-7.5z"></path></svg>Run all</button>
+</header>
+
+<main ref="{{ canvasRef }}" style="flex:1; position:relative; overflow:hidden; background-color:#EEF0F3; background-image:radial-gradient(circle, rgba(22,24,29,.14) 1px, transparent 1.4px); background-size:22px 22px;">
+<svg style="position:absolute; left:0; top:0; width:100%; height:100%; overflow:visible; pointer-events:none; z-index:1;"><path d="{{ edgesSolid }}" style="fill:none; stroke:#A3A8B1; stroke-width:1.5;"></path><path d="{{ edgesDashed }}" style="fill:none; stroke:#B9BDC4; stroke-width:1.5; stroke-dasharray:4 5;"></path></svg>
+
+<div style="position:absolute; left:32px; top:36px; width:320px; box-sizing:border-box; padding:0 16px 16px; border-radius:16px; background:rgba(255,255,255,.45); border:1px solid rgba(22,24,29,.1);">
+<div style="height:46px; display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;"><span style="color:#474B53; font-weight:600;">Research inputs</span><span style="color:#6E737C;">4</span></div>
+<div style="display:flex; flex-direction:column; gap:12px;">
+
+<div style="position:relative; z-index:2; background:#FFFFFF; border:1px solid #DCDFE4; border-radius:12px; box-shadow:0 1px 2px rgba(22,24,29,.05), 0 10px 28px -14px rgba(22,24,29,.22);">
+<span data-port="p1" style="position:absolute; right:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:#16181D; border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<div style="height:56px; box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:0 12px; border-bottom:1px solid #ECEEF1;">
+<span style="width:30px; height:30px; flex:none; border-radius:8px; display:grid; place-items:center; background:#16181D; color:#FFFFFF; font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600;">P1</span>
+<div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; line-height:1.25;">Participant P1</div><div style="font-size:12px; color:#626771; margin-top:2px;">Interview transcript</div></div>
+</div>
+<div style="padding:12px 14px 14px; font-size:13px; line-height:1.5; color:#3A3E46;">
+<sc-if value="{{ excerpt }}" hint-placeholder-val="{{ true }}"><div style="display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;">I normally book appointments online because it’s just easier than calling. Most of the time it’s pretty straightforward. I can see what times are available and pick one that works for me.</div></sc-if>
+<sc-if value="{{ full }}" hint-placeholder-val="{{ false }}"><div style="max-height:132px; overflow:auto; display:flex; flex-direction:column; gap:8px;"><p style="margin:0;">I normally book appointments online because it’s just easier than calling. Most of the time it’s pretty straightforward. I can see what times are available and pick one that works for me.</p><p style="margin:0;">The only thing I sometimes get stuck on is the appointment type. There can be a few different options and I’m not always sure what the difference is. Last time I just picked the standard one because it sounded closest to what I needed.</p><p style="margin:0;">After I booked it, I got the confirmation straight away, so that part was fine. It had the date and time and everything. I think I would’ve liked a bit more information about whether I needed to do anything before the appointment, but it wasn’t a huge issue.</p></div></sc-if>
+</div>
+</div>
+
+<div style="position:relative; z-index:2; background:#FFFFFF; border:1px solid #DCDFE4; border-radius:12px; box-shadow:0 1px 2px rgba(22,24,29,.05), 0 10px 28px -14px rgba(22,24,29,.22);">
+<span data-port="p2" style="position:absolute; right:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:#16181D; border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<div style="height:56px; box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:0 12px; border-bottom:1px solid #ECEEF1;">
+<span style="width:30px; height:30px; flex:none; border-radius:8px; display:grid; place-items:center; background:#16181D; color:#FFFFFF; font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600;">P2</span>
+<div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; line-height:1.25;">Participant P2</div><div style="font-size:12px; color:#626771; margin-top:2px;">Interview transcript</div></div>
+</div>
+<div style="padding:12px 14px 14px; font-size:13px; line-height:1.5; color:#3A3E46;">
+<sc-if value="{{ excerpt }}" hint-placeholder-val="{{ true }}"><div style="display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;">I had a video appointment with my GP for a regular follow-up and, yeah, I got a reminder the day before with the time, the link and just a short note about what I should have ready.</div></sc-if>
+<sc-if value="{{ full }}" hint-placeholder-val="{{ false }}"><div style="max-height:132px; overflow:auto; display:flex; flex-direction:column; gap:8px;"><p style="margin:0;">I had a video appointment with my GP for a regular follow-up and, yeah, I got a reminder the day before with the time, the link and just a short note about what I should have ready.</p><p style="margin:0;">I joined a few minutes early and the link worked straight away, so there wasn’t really anything I had to figure out or… yeah, troubleshoot or anything like that.</p><p style="margin:0;">During the appointment the GP explained what we were reviewing and I didn’t feel rushed. There were maybe one or two terms I didn’t really understand, but I just asked and she explained them in a simpler way, so that was fine.</p></div></sc-if>
+</div>
+</div>
+
+<div style="position:relative; z-index:2; background:#FFFFFF; border:1px solid #DCDFE4; border-radius:12px; box-shadow:0 1px 2px rgba(22,24,29,.05), 0 10px 28px -14px rgba(22,24,29,.22);">
+<span data-port="p3" style="position:absolute; right:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:#16181D; border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<div style="height:56px; box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:0 12px; border-bottom:1px solid #ECEEF1;">
+<span style="width:30px; height:30px; flex:none; border-radius:8px; display:grid; place-items:center; background:#16181D; color:#FFFFFF; font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600;">P3</span>
+<div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; line-height:1.25;">Participant P3</div><div style="font-size:12px; color:#626771; margin-top:2px;">Interview transcript</div></div>
+</div>
+<div style="padding:12px 14px 14px; font-size:13px; line-height:1.5; color:#3A3E46;">
+<sc-if value="{{ excerpt }}" hint-placeholder-val="{{ true }}"><div style="display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;">So I went to my GP because I’d been having this issue for a while, and after we talked about it she said she wanted me to see a specialist.</div></sc-if>
+<sc-if value="{{ full }}" hint-placeholder-val="{{ false }}"><div style="max-height:132px; overflow:auto; display:flex; flex-direction:column; gap:8px;"><p style="margin:0;">So I went to my GP because I’d been having this issue for a while, and after we talked about it she said she wanted me to see a specialist.</p><p style="margin:0;">She told me the referral would be sent through, so I just thought… okay, that’s done, I guess I just wait for them to contact me.</p><p style="margin:0;">I think it was about a week later and I still hadn’t heard anything. At first I wasn’t too worried because I know these things can take time, but then I started wondering if I was actually supposed to call someone myself.</p><p style="margin:0;">So I rang the specialist clinic just to check, and they said they couldn’t see any referral for me.</p></div></sc-if>
+</div>
+</div>
+
+<div style="position:relative; z-index:2; background:#FFFFFF; border:1px solid #DCDFE4; border-radius:12px; box-shadow:0 1px 2px rgba(22,24,29,.05), 0 10px 28px -14px rgba(22,24,29,.22);">
+<span style="position:absolute; right:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:#E3E6EA; border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<div style="height:56px; box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:0 12px; border-bottom:1px solid #ECEEF1;">
+<span style="width:30px; height:30px; flex:none; box-sizing:border-box; border-radius:8px; display:grid; place-items:center; background:#FFFFFF; border:1.5px dashed #B9BDC4; color:#626771; font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600;">P4</span>
+<div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; line-height:1.25;">Participant P4</div><div style="font-size:12px; color:#626771; margin-top:2px;">Documents</div></div>
+</div>
+<div style="padding:12px;">
+<div style="border:1.5px dashed #CBCFD5; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:12px; background:#F8F9FA; cursor:pointer;" style-hover="background:#F1F3F5">
+<span style="width:32px; height:32px; flex:none; border-radius:8px; background:#FFFFFF; border:1px solid #E1E4E8; display:grid; place-items:center; color:#474B53;"><svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;"><path d="M12 15V4M7 9l5-5 5 5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path></svg></span>
+<div><div style="font-size:13px; font-weight:600;">Click or drop files</div><div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#626771; margin-top:2px;">PDF, DOCX, TXT</div></div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<div style="position:absolute; left:424px; top:36px; box-sizing:border-box; padding:0 20px 20px; border-radius:16px; background:rgba(255,255,255,.45); border:1px solid rgba(22,24,29,.1);">
+<div style="height:46px; display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;"><span style="color:#474B53; font-weight:600;">AI research pipeline</span><span style="color:#6E737C;">4 steps</span></div>
+<div style="display:flex; gap:72px; align-items:flex-start;">
+
+<div style="position:relative; z-index:2; width:380px; background:#FFFFFF; border:1px solid #DCDFE4; border-radius:12px; box-shadow:0 1px 2px rgba(22,24,29,.05), 0 10px 28px -14px rgba(22,24,29,.22);">
+<span data-port="t-in" style="position:absolute; left:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:oklch(0.5 0.13 250); border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<span data-port="t-out" style="position:absolute; right:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:oklch(0.5 0.13 250); border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<div style="height:56px; box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:0 10px 0 12px; border-bottom:1px solid #ECEEF1;">
+<span style="width:30px; height:30px; flex:none; border-radius:8px; display:grid; place-items:center; background:oklch(0.5 0.13 250); color:#FFFFFF; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;">1</span>
+<div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; line-height:1.25;">Insight Weaver</div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px; color:#626771; margin-top:2px;">5 themes · from 3 transcripts</div></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px; color:#626771; margin-top:2px;">Finds themes in your transcripts</div></sc-if></div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; gap:5px; border-radius:11px; background:#F1F3F5; color:#474B53; font-size:11.5px; font-weight:500;"><svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Done</span></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; border-radius:11px; background:#FFFFFF; border:1px solid #D3D7DD; color:#474B53; font-size:11.5px; font-weight:500;">Ready</span></sc-if>
+</div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}">
+<div style="padding:4px 8px 10px;">
+<div style="display:flex; justify-content:space-between; padding:8px 10px 4px 34px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#6E737C;"><span>Theme</span><span>Mentions</span></div>
+<sc-for list="{{ themes }}" as="t" hint-placeholder-count="5">
+<div style="border-radius:9px; background:{{ t.bg }};">
+<div onClick="{{ t.toggle }}" style="display:flex; align-items:center; gap:10px; padding:10px; cursor:pointer; border-radius:9px;" style-hover="background:#F4F5F7">
+<svg viewBox="0 0 24 24" style="width:14px; height:14px; flex:none; fill:none; stroke:#8A8F98; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transform:rotate({{ t.rot }}); transition:transform .15s;"><path d="M9 6l6 6-6 6"></path></svg>
+<span style="flex:1; font-size:13.5px; line-height:1.35; font-weight:500; text-wrap:pretty;">{{ t.title }}</span>
+<span style="width:44px; height:6px; flex:none; border-radius:3px; background:#E9EBEE; overflow:hidden;"><span style="display:block; height:100%; width:{{ t.pct }}; background:oklch(0.5 0.13 250); border-radius:3px;"></span></span>
+<span style="width:12px; flex:none; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500;">{{ t.count }}</span>
+</div>
+<sc-if value="{{ t.open }}" hint-placeholder-val="{{ false }}">
+<div style="padding:0 10px 10px 34px; display:flex; flex-direction:column; gap:6px;">
+<sc-for list="{{ t.quotes }}" as="q" hint-placeholder-count="1">
+<div style="display:flex; gap:10px; align-items:flex-start; background:#FFFFFF; border:1px solid #E4E7EB; border-radius:8px; padding:9px 11px; font-size:12.5px; line-height:1.5; color:#30343B;">
+<span style="flex:none; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; padding:1px 5px; border-radius:4px; background:#16181D; color:#FFFFFF; margin-top:1px;">{{ q.who }}</span>
+<span>“{{ q.text }}”</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 28px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;">
+<p style="margin:0; max-width:280px; font-size:13.5px; line-height:1.55; color:#474B53; text-wrap:pretty;">Reads the connected transcripts and groups what participants said into recurring themes.</p>
+<button style="height:34px; padding:0 16px; display:flex; align-items:center; gap:7px; border:none; background:#16181D; color:#FFFFFF; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;"><svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor;"><path d="M7 4.5v15l12.5-7.5z"></path></svg>Run</button>
+<span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#626771;">3 transcripts connected</span>
+</div>
+</sc-if>
+<div style="height:46px; box-sizing:border-box; display:flex; align-items:center; gap:6px; padding:0 8px 0 14px; border-top:1px solid #ECEEF1;">
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#626771;">2,131 tokens</span></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#626771;">Not run yet</span></sc-if>
+<div style="flex:1;"></div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><button style="height:30px; padding:0 12px; display:flex; align-items:center; gap:6px; border:1px solid #D3D7DD; background:#FFFFFF; border-radius:8px; font-size:12.5px; font-weight:500; cursor:pointer; color:#16181D;" style-hover="background:#F3F4F6"><svg viewBox="0 0 24 24" style="width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"></path><path d="M3 3v5h5"></path></svg>Rerun</button></sc-if>
+</div>
+</div>
+
+<div style="position:relative; z-index:2; width:500px; background:#FFFFFF; border:1px solid #DCDFE4; border-radius:12px; box-shadow:0 1px 2px rgba(22,24,29,.05), 0 10px 28px -14px rgba(22,24,29,.22);">
+<span data-port="j-in" style="position:absolute; left:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:oklch(0.5 0.15 293); border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<span data-port="j-out" style="position:absolute; right:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:oklch(0.5 0.15 293); border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<div style="height:56px; box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:0 10px 0 12px; border-bottom:1px solid #ECEEF1;">
+<span style="width:30px; height:30px; flex:none; border-radius:8px; display:grid; place-items:center; background:oklch(0.5 0.15 293); color:#FFFFFF; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;">2</span>
+<div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; line-height:1.25;">Journey Mapper</div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px; color:#626771; margin-top:2px;">5 stages · friction in 3</div></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px; color:#626771; margin-top:2px;">Maps where users struggle</div></sc-if></div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; gap:5px; border-radius:11px; background:#F1F3F5; color:#474B53; font-size:11.5px; font-weight:500;"><svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Done</span></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; border-radius:11px; background:#F1F3F5; color:#6E737C; font-size:11.5px; font-weight:500;">Waiting</span></sc-if>
+</div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}">
+<div style="padding:14px 16px 0;">
+<div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#6E737C; margin-bottom:8px;">Emotion by stage</div>
+<div style="position:relative;">
+<div style="position:absolute; left:20%; width:60%; top:0; bottom:0; background:oklch(0.96 0.045 85); border-radius:6px 6px 0 0;"></div>
+<div style="position:absolute; left:20%; top:8px; padding-left:10px; display:flex; align-items:center; gap:5px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:oklch(0.47 0.1 65);"><svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;"><path d="M10.3 4.2 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>Friction · 3 stages</div>
+<svg viewBox="0 0 468 168" style="position:relative; display:block; width:100%; height:auto; overflow:visible;">
+<defs><linearGradient id="jmfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="oklch(0.5 0.15 293)" stop-opacity="0.16"></stop><stop offset="1" stop-color="oklch(0.5 0.15 293)" stop-opacity="0"></stop></linearGradient></defs>
+<path d="M46.8 46.2 C62.4 51.8 109.2 69.7 140.4 79.8 C171.6 89.9 202.8 99.1 234 106.6 C265.2 114.1 296.4 124.6 327.6 124.6 C358.8 124.6 405.6 70.4 421.2 59.6 L421.2 168 L46.8 168 Z" style="fill:url(#jmfill);"></path>
+<path d="M46.8 46.2 C62.4 51.8 109.2 69.7 140.4 79.8 C171.6 89.9 202.8 99.1 234 106.6 C265.2 114.1 296.4 124.6 327.6 124.6 C358.8 124.6 405.6 70.4 421.2 59.6" style="fill:none; stroke:oklch(0.5 0.15 293); stroke-width:2.5; stroke-linecap:round;"></path>
+<circle cx="46.8" cy="46.2" r="4.5" style="fill:#FFFFFF; stroke:oklch(0.5 0.15 293); stroke-width:2;"></circle>
+<circle cx="140.4" cy="79.8" r="4.5" style="fill:#FFFFFF; stroke:oklch(0.5 0.15 293); stroke-width:2;"></circle>
+<circle cx="234" cy="106.6" r="4.5" style="fill:#FFFFFF; stroke:oklch(0.5 0.15 293); stroke-width:2;"></circle>
+<circle cx="327.6" cy="124.6" r="5.5" style="fill:oklch(0.5 0.15 293); stroke:#FFFFFF; stroke-width:2;"></circle>
+<circle cx="421.2" cy="59.6" r="4.5" style="fill:#FFFFFF; stroke:oklch(0.5 0.15 293); stroke-width:2;"></circle>
+<text x="327.6" y="150" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; fill:#565B64;">Lowest point</text>
+</svg>
+<div style="position:relative; display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); border-top:1px solid #E4E7EB;">
+<div style="padding:10px 6px 14px; display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;"><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#6E737C;">01</span><span style="font-size:12.5px; font-weight:600; line-height:1.3;">Referral Initiated</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em; color:#474B53;">OPTIMISTIC</span></div>
+<div style="padding:10px 6px 14px; display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;"><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#6E737C;">02</span><span style="font-size:12.5px; font-weight:600; line-height:1.3;">Referral Sent</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em; color:#474B53;">UNCERTAIN</span></div>
+<div style="padding:10px 6px 14px; display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;"><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#6E737C;">03</span><span style="font-size:12.5px; font-weight:600; line-height:1.3;">Waiting &amp; Tracking</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em; color:#474B53;">FRUSTRATED</span></div>
+<div style="padding:10px 6px 14px; display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;"><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#6E737C;">04</span><span style="font-size:12.5px; font-weight:600; line-height:1.3;">Active Follow-up</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em; color:#474B53;">EXASPERATED</span></div>
+<div style="padding:10px 6px 14px; display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;"><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#6E737C;">05</span><span style="font-size:12.5px; font-weight:600; line-height:1.3;">Resolution</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em; color:#474B53;">RELIEVED</span></div>
+</div>
+</div>
+<div style="margin:12px -8px 0; max-height:330px; overflow:auto; padding-bottom:8px; display:flex; flex-direction:column; gap:4px;">
+<sc-for list="{{ stages }}" as="st" hint-placeholder-count="5">
+<div style="border-radius:9px; border:1px solid {{ st.border }}; background:{{ st.bg }};">
+<div onClick="{{ st.toggle }}" style="display:flex; align-items:center; gap:10px; padding:9px 10px; cursor:pointer; border-radius:9px;" style-hover="background:#F6F7F9">
+<svg viewBox="0 0 24 24" style="width:14px; height:14px; flex:none; fill:none; stroke:#8A8F98; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transform:rotate({{ st.rot }}); transition:transform .15s;"><path d="M9 6l6 6-6 6"></path></svg>
+<span style="flex:1; font-size:13.5px; font-weight:600;">{{ st.label }}</span>
+<sc-if value="{{ st.friction }}" hint-placeholder-val="{{ false }}"><span style="height:20px; padding:0 7px; display:flex; align-items:center; gap:4px; border-radius:5px; background:oklch(0.95 0.05 85); color:oklch(0.45 0.1 65); font-size:11.5px; font-weight:600;"><svg viewBox="0 0 24 24" style="width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><path d="M10.3 4.2 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>Friction</span></sc-if>
+<span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em; color:#474B53; width:84px; text-align:right;">{{ st.emotion }}</span>
+</div>
+<sc-if value="{{ st.open }}" hint-placeholder-val="{{ false }}">
+<div style="padding:0 12px 12px 34px; display:flex; flex-direction:column; gap:10px;">
+<p style="margin:0; font-size:13px; line-height:1.5; color:#3A3E46; text-wrap:pretty;">{{ st.desc }}</p>
+<sc-if value="{{ st.hasTheme }}" hint-placeholder-val="{{ false }}"><div style="border:1px solid #E4E7EB; border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
+<span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#6E737C;">Linked theme</span>
+<span style="font-size:13px; font-weight:600;">{{ st.theme }}</span>
+<p style="margin:0; font-size:12.5px; line-height:1.5; color:#3A3E46; text-wrap:pretty;">{{ st.insight }}</p>
+<div style="background:#F6F7F9; border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;"><span style="font-size:12.5px; line-height:1.5; color:#30343B;">“{{ st.quote }}”</span><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; color:#565B64;">— Participant P3</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em; color:#8A8F98;">READ-ONLY</span></div></div>
+</div></sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 28px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;">
+<p style="margin:0; max-width:300px; font-size:13.5px; line-height:1.55; color:#474B53; text-wrap:pretty;">Maps the themes onto journey stages, showing how people felt at each one and where they struggled.</p>
+<button disabled="" style="height:34px; padding:0 16px; display:flex; align-items:center; gap:7px; border:none; background:#EDEFF2; color:#8A8F98; border-radius:8px; font-size:13px; font-weight:500; cursor:not-allowed;"><svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor;"><path d="M7 4.5v15l12.5-7.5z"></path></svg>Run</button>
+<span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#626771;">Runs after Insight Weaver</span>
+</div>
+</sc-if>
+<div style="height:46px; box-sizing:border-box; display:flex; align-items:center; gap:6px; padding:0 8px 0 14px; border-top:1px solid #ECEEF1;">
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#626771;">2,412 tokens</span></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#626771;">Not run yet</span></sc-if>
+<div style="flex:1;"></div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><button style="height:30px; padding:0 12px; display:flex; align-items:center; gap:6px; border:1px solid #D3D7DD; background:#FFFFFF; border-radius:8px; font-size:12.5px; font-weight:500; cursor:pointer; color:#16181D;" style-hover="background:#F3F4F6"><svg viewBox="0 0 24 24" style="width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"></path><path d="M3 3v5h5"></path></svg>Rerun</button></sc-if>
+</div>
+</div>
+
+<div style="position:relative; z-index:2; width:400px; background:#FFFFFF; border:1px solid #DCDFE4; border-radius:12px; box-shadow:0 1px 2px rgba(22,24,29,.05), 0 10px 28px -14px rgba(22,24,29,.22);">
+<span data-port="s-in" style="position:absolute; left:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:oklch(0.5 0.085 190); border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<span data-port="s-out" style="position:absolute; right:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:oklch(0.5 0.085 190); border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<div style="height:56px; box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:0 10px 0 12px; border-bottom:1px solid #ECEEF1;">
+<span style="width:30px; height:30px; flex:none; border-radius:8px; display:grid; place-items:center; background:oklch(0.5 0.085 190); color:#FFFFFF; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;">3</span>
+<div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; line-height:1.25;">Patient Safety Reviewer</div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px; color:#626771; margin-top:2px;">5 flags · 1 stage clear</div></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px; color:#626771; margin-top:2px;">Flags patient-safety risks</div></sc-if></div>
+<sc-if value="{{ pillPending }}" hint-placeholder-val="{{ true }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; gap:6px; border-radius:11px; background:oklch(0.95 0.05 85); color:oklch(0.45 0.1 65); font-size:11.5px; font-weight:600;"><span style="width:6px; height:6px; border-radius:50%; background:oklch(0.74 0.15 72);"></span>{{ reviewPill }}</span></sc-if>
+<sc-if value="{{ pillDone }}" hint-placeholder-val="{{ false }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; gap:5px; border-radius:11px; background:#F1F3F5; color:#474B53; font-size:11.5px; font-weight:500;"><svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Reviewed</span></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; border-radius:11px; background:#F1F3F5; color:#6E737C; font-size:11.5px; font-weight:500;">Waiting</span></sc-if>
+</div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}">
+<div style="padding:12px 14px; border-bottom:1px solid #ECEEF1; display:flex; flex-direction:column; gap:9px;">
+<span style="font-size:13px; font-weight:600;">{{ reviewLabel }}</span>
+<div style="display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:4px;">
+<sc-for list="{{ flags }}" as="f" hint-placeholder-count="5"><div style="height:6px; border-radius:3px; background:{{ f.seg }}; transition:background .2s;"></div></sc-for>
+</div>
+</div>
+<div style="padding:8px; max-height:600px; overflow:auto; display:flex; flex-direction:column; gap:4px;">
+<sc-for list="{{ flags }}" as="f" hint-placeholder-count="5">
+<div style="border-radius:10px; border:1px solid {{ f.border }}; background:{{ f.bg }}; box-shadow:{{ f.shadow }};">
+<div onClick="{{ f.toggle }}" style="display:flex; gap:10px; padding:9px 10px; cursor:pointer; align-items:flex-start; border-radius:9px;" style-hover="background:#F6F7F9">
+<sc-if value="{{ f.high }}" hint-placeholder-val="{{ false }}"><span style="width:58px; flex:none; height:20px; display:grid; place-items:center; border-radius:5px; background:oklch(0.95 0.035 25); color:oklch(0.48 0.17 27); font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; letter-spacing:.04em;">HIGH</span></sc-if>
+<sc-if value="{{ f.med }}" hint-placeholder-val="{{ false }}"><span style="width:58px; flex:none; height:20px; display:grid; place-items:center; border-radius:5px; background:oklch(0.95 0.05 85); color:oklch(0.45 0.1 65); font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; letter-spacing:.04em;">MEDIUM</span></sc-if>
+<sc-if value="{{ f.low }}" hint-placeholder-val="{{ false }}"><span style="width:58px; flex:none; height:20px; display:grid; place-items:center; border-radius:5px; background:#EDEFF2; color:#565B64; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; letter-spacing:.04em;">LOW</span></sc-if>
+<div style="flex:1; min-width:0;">
+<div style="font-size:13.5px; font-weight:600; line-height:1.35; color:{{ f.titleColor }}; text-wrap:pretty;">{{ f.title }}</div>
+<div style="font-size:12px; color:#626771; margin-top:2px;">{{ f.category }} · {{ f.stage }}</div>
+</div>
+<sc-if value="{{ f.approved }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; color:oklch(0.45 0.085 190); margin-top:2px;">Approved</span></sc-if>
+<sc-if value="{{ f.dismissed }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; color:#6E737C; margin-top:2px;">Dismissed</span></sc-if>
+</div>
+<sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+<div style="padding:2px 12px 12px; display:flex; flex-direction:column; gap:10px;">
+<div style="display:flex; flex-wrap:wrap; gap:6px;"><span style="height:22px; padding:0 8px; display:flex; align-items:center; border-radius:5px; background:oklch(0.95 0.035 25); color:oklch(0.48 0.17 27); font-size:11.5px; font-weight:600;">{{ f.category }}</span><span style="height:22px; box-sizing:border-box; padding:0 8px; display:flex; align-items:center; border-radius:5px; border:1px solid oklch(0.85 0.07 25); color:oklch(0.48 0.17 27); font-size:11.5px; font-weight:500;">Human review required</span></div>
+<div style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:#474B53;">Affected journey stage<span style="height:22px; padding:0 8px; display:flex; align-items:center; border-radius:5px; background:oklch(0.95 0.03 293); color:oklch(0.42 0.14 293); font-size:12px; font-weight:500;">{{ f.stage }}</span></div>
+<div><div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#6E737C;">Reason for flagging</div><p style="margin:4px 0 0; font-size:13px; line-height:1.5; color:#3A3E46; text-wrap:pretty;">{{ f.reason }}</p></div>
+<div><div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#6E737C;">Evidence trace</div><div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:6px;"><span style="padding:3px 8px; border-radius:5px; background:#F1F3F5; font-size:12px; color:#30343B;">{{ f.stage }}</span><span style="color:#8A8F98; font-size:12px;">→</span><span style="padding:3px 8px; border-radius:5px; background:#F1F3F5; font-size:12px; color:#30343B;">{{ f.theme }}</span></div></div>
+<div style="background:#F6F7F9; border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;"><span style="font-size:12.5px; line-height:1.5; color:#30343B;">“{{ f.quote }}”</span><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; color:#565B64;">— Participant P3</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em; color:#8A8F98;">READ-ONLY</span></div></div>
+<sc-if value="{{ f.pending }}" hint-placeholder-val="{{ true }}"><div style="display:flex; gap:8px;">
+<button onClick="{{ f.approve }}" style="flex:1; height:32px; border:none; background:#16181D; color:#FFFFFF; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;" style-hover="background:#2D3038">Approve</button>
+<button onClick="{{ f.dismiss }}" style="flex:1; height:32px; border:1px solid #D3D7DD; background:#FFFFFF; color:#16181D; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;" style-hover="background:#F3F4F6">Dismiss</button>
+</div></sc-if>
+<sc-if value="{{ f.done }}" hint-placeholder-val="{{ false }}"><button onClick="{{ f.undo }}" style="align-self:flex-start; height:30px; padding:0 12px; border:1px solid #D3D7DD; background:#FFFFFF; color:#16181D; border-radius:8px; font-size:12.5px; font-weight:500; cursor:pointer;">Undo</button></sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 28px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;">
+<p style="margin:0; max-width:280px; font-size:13.5px; line-height:1.55; color:#474B53; text-wrap:pretty;">Checks each journey stage for patient-safety risks and lists them for someone to approve or dismiss.</p>
+<button disabled="" style="height:34px; padding:0 16px; display:flex; align-items:center; gap:7px; border:none; background:#EDEFF2; color:#8A8F98; border-radius:8px; font-size:13px; font-weight:500; cursor:not-allowed;"><svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor;"><path d="M7 4.5v15l12.5-7.5z"></path></svg>Run</button>
+<span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#626771;">Runs after Journey Mapper</span>
+</div>
+</sc-if>
+<div style="height:46px; box-sizing:border-box; display:flex; align-items:center; gap:6px; padding:0 8px 0 14px; border-top:1px solid #ECEEF1;">
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#626771;">2,764 tokens</span></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#626771;">Not run yet</span></sc-if>
+<div style="flex:1;"></div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><button style="height:30px; padding:0 12px; display:flex; align-items:center; gap:6px; border:1px solid #D3D7DD; background:#FFFFFF; border-radius:8px; font-size:12.5px; font-weight:500; cursor:pointer; color:#16181D;" style-hover="background:#F3F4F6"><svg viewBox="0 0 24 24" style="width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"></path><path d="M3 3v5h5"></path></svg>Rerun</button></sc-if>
+</div>
+</div>
+
+<div style="position:relative; z-index:2; width:400px; background:#FFFFFF; border:1px solid #DCDFE4; border-radius:12px; box-shadow:0 1px 2px rgba(22,24,29,.05), 0 10px 28px -14px rgba(22,24,29,.22);">
+<span data-port="c-in" style="position:absolute; left:-8px; top:21px; width:14px; height:14px; box-sizing:border-box; border-radius:50%; background:oklch(0.5 0.11 150); border:2.5px solid #FFFFFF; box-shadow:0 0 0 1px rgba(22,24,29,.2); z-index:3;"></span>
+<div style="height:56px; box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:0 10px 0 12px; border-bottom:1px solid #ECEEF1;">
+<span style="width:30px; height:30px; flex:none; border-radius:8px; display:grid; place-items:center; background:oklch(0.5 0.11 150); color:#FFFFFF; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;">4</span>
+<div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; line-height:1.25;">UX Coach</div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px; color:#626771; margin-top:2px;">2 recommendations · from approved flags</div></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px; color:#626771; margin-top:2px;">Suggests what to do next</div></sc-if></div>
+<sc-if value="{{ coachPending }}" hint-placeholder-val="{{ true }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; gap:6px; border-radius:11px; background:oklch(0.95 0.05 85); color:oklch(0.45 0.1 65); font-size:11.5px; font-weight:600;"><span style="width:6px; height:6px; border-radius:50%; background:oklch(0.74 0.15 72);"></span>{{ coachPill }}</span></sc-if>
+<sc-if value="{{ coachDone }}" hint-placeholder-val="{{ false }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; border-radius:11px; background:#F1F3F5; color:#474B53; font-size:11.5px; font-weight:500;">Reviewed</span></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><span style="height:22px; padding:0 8px; display:flex; align-items:center; border-radius:11px; background:#F1F3F5; color:#6E737C; font-size:11.5px; font-weight:500;">Waiting</span></sc-if>
+</div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}">
+<div style="padding:8px; max-height:690px; overflow:auto; display:flex; flex-direction:column; gap:4px;">
+<sc-for list="{{ coach }}" as="c" hint-placeholder-count="2">
+<div style="border-radius:10px; border:1px solid {{ c.border }}; background:{{ c.bg }};">
+<div onClick="{{ c.toggle }}" style="display:flex; gap:10px; padding:10px; cursor:pointer; align-items:flex-start; border-radius:9px;" style-hover="background:#F6F7F9">
+<span style="margin-top:3px;"><svg viewBox="0 0 24 24" style="width:14px; height:14px; flex:none; fill:none; stroke:#8A8F98; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transform:rotate({{ c.rot }}); transition:transform .15s;"><path d="M9 6l6 6-6 6"></path></svg></span>
+<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:6px;">
+<span style="align-self:flex-start; height:20px; padding:0 7px; display:flex; align-items:center; border-radius:5px; background:oklch(0.95 0.035 25); color:oklch(0.48 0.17 27); font-size:11px; font-weight:600;">Responds to · {{ c.respondsTo }}</span>
+<span style="font-size:13.5px; font-weight:600; line-height:1.4; text-wrap:pretty;">{{ c.title }}</span>
+</div>
+<sc-if value="{{ c.approved }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; color:oklch(0.5 0.11 150); margin-top:2px;">Approved</span></sc-if>
+<sc-if value="{{ c.dismissed }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; color:#6E737C; margin-top:2px;">Dismissed</span></sc-if>
+</div>
+<sc-if value="{{ c.open }}" hint-placeholder-val="{{ false }}">
+<div style="padding:2px 12px 12px 34px; display:flex; flex-direction:column; gap:12px;">
+<div style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:#474B53;">Affected journey stage<span style="height:22px; padding:0 8px; display:flex; align-items:center; border-radius:5px; background:oklch(0.95 0.03 293); color:oklch(0.42 0.14 293); font-size:12px; font-weight:500;">{{ c.stage }}</span></div>
+<div><div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#6E737C;">Why it matters</div><p style="margin:4px 0 0; font-size:13px; line-height:1.5; color:#3A3E46; text-wrap:pretty;">{{ c.why }}</p></div>
+<div><div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#6E737C;">Next steps</div><div style="margin-top:6px; display:flex; flex-direction:column; gap:6px;">
+<sc-for list="{{ c.steps }}" as="s" hint-placeholder-count="2"><div style="display:flex; gap:9px; align-items:flex-start; font-size:13px; line-height:1.5; color:#3A3E46;"><span style="width:18px; height:18px; flex:none; margin-top:1px; border-radius:50%; background:oklch(0.95 0.04 150); color:oklch(0.5 0.11 150); display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600;">{{ s.n }}</span><span style="text-wrap:pretty;">{{ s.text }}</span></div></sc-for>
+</div></div>
+<sc-if value="{{ c.pending }}" hint-placeholder-val="{{ true }}"><div style="display:flex; gap:8px;"><button onClick="{{ c.approve }}" style="flex:1; height:32px; border:none; background:#16181D; color:#FFFFFF; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;">Approve</button><button onClick="{{ c.dismiss }}" style="flex:1; height:32px; border:1px solid #D3D7DD; background:#FFFFFF; color:#16181D; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;">Dismiss</button></div></sc-if>
+<sc-if value="{{ c.done }}" hint-placeholder-val="{{ false }}"><button onClick="{{ c.undo }}" style="align-self:flex-start; height:30px; padding:0 12px; border:1px solid #D3D7DD; background:#FFFFFF; color:#16181D; border-radius:8px; font-size:12.5px; font-weight:500; cursor:pointer;">Undo</button></sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 28px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;">
+<p style="margin:0; max-width:280px; font-size:13.5px; line-height:1.55; color:#474B53; text-wrap:pretty;">Turns each approved safety flag into concrete design recommendations.</p>
+<button disabled="" style="height:34px; padding:0 16px; display:flex; align-items:center; gap:7px; border:none; background:#EDEFF2; color:#8A8F98; border-radius:8px; font-size:13px; font-weight:500; cursor:not-allowed;"><svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor;"><path d="M7 4.5v15l12.5-7.5z"></path></svg>Run</button>
+<span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#626771;">Runs after Patient Safety Reviewer</span>
+</div>
+</sc-if>
+<div style="height:46px; box-sizing:border-box; display:flex; align-items:center; gap:6px; padding:0 8px 0 14px; border-top:1px solid #ECEEF1;">
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#626771;">3,182 tokens</span></sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#626771;">Not run yet</span></sc-if>
+<div style="flex:1;"></div>
+<sc-if value="{{ results }}" hint-placeholder-val="{{ true }}"><button style="height:30px; padding:0 12px; display:flex; align-items:center; gap:6px; border:1px solid #D3D7DD; background:#FFFFFF; border-radius:8px; font-size:12.5px; font-weight:500; cursor:pointer; color:#16181D;" style-hover="background:#F3F4F6"><svg viewBox="0 0 24 24" style="width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"></path><path d="M3 3v5h5"></path></svg>Rerun</button></sc-if>
+</div>
+</div>
+
+</div>
+</div>
+
+<div style="position:absolute; left:50%; bottom:20px; transform:translateX(-50%); display:flex; align-items:center; gap:2px; padding:4px; background:#FFFFFF; border:1px solid #DCDFE4; border-radius:10px; box-shadow:0 4px 14px -6px rgba(22,24,29,.2); z-index:3; font-size:12.5px; color:#474B53;">
+<span style="width:30px; height:30px; display:grid; place-items:center; border-radius:7px; font-size:16px;">−</span>
+<span style="padding:0 6px; font-family:'IBM Plex Mono',monospace; font-size:11.5px;">100%</span>
+<span style="width:30px; height:30px; display:grid; place-items:center; border-radius:7px; font-size:16px;">+</span>
+</div>
+</main>
+</div>
+
+<div style="width:440px; flex:none; box-sizing:border-box; padding:32px; background:#FFFFFF; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,.1), 0 24px 60px -20px rgba(0,0,0,.25); display:flex; flex-direction:column; gap:20px;">
+<div><div style="font-size:22px; font-weight:600;">What changed</div><div style="font-size:13.5px; color:#565B64; margin-top:6px; line-height:1.5;">Try the Tweaks panel to see the not-run state and full transcripts. Theme rows and safety flags are clickable.</div></div>
+<div style="display:flex; flex-direction:column; gap:16px; font-size:13.5px; line-height:1.5; color:#3A3E46;">
+<div><div style="font-weight:600; color:#16181D;">1. Lighter group frames</div>Solid yellow and blue backgrounds are now pale outlined frames with a small label, so the boxes stand out.</div>
+<div><div style="font-weight:600; color:#16181D;">2. One colour per step, used sparingly</div>Blue, violet and teal appear only on each step’s number tile, ports and data. Amber and red are kept for friction and risk, so the safety step is no longer red.</div>
+<div><div style="font-weight:600; color:#16181D;">3. Cleaner headers</div>Numbered tiles replace emoji and show the order. Dropped “Box”, the duplicate type label and the ×. The second line shows the result (“5 themes · from 3 transcripts”) and a pill shows status.</div>
+<div><div style="font-weight:600; color:#16181D;">4. Transcript excerpts</div>Participant boxes show three lines instead of a wall of text. Full text is still available.</div>
+<div><div style="font-weight:600; color:#16181D;">5. Themes ranked</div>Sorted by mentions with a small bar. Rows expand to show supporting quotes.</div>
+<div><div style="font-weight:600; color:#16181D;">6. Journey as a chart</div>The stage list is now an emotion curve, with the three friction stages grouped in one amber band.</div>
+<div><div style="font-weight:600; color:#16181D;">7. Safety flags as a review list</div>All five flags visible with severity. One opens at a time with its tags, affected stage, reason, evidence trace (stage → theme), read-only quote and Approve / Dismiss. The bar fills as you review.</div>
+<div><div style="font-weight:600; color:#16181D;">Journey stages and UX Coach</div>Stages still expand to show the description, linked theme and quote. Coach recommendations open to why it matters and numbered next steps, with Approve / Dismiss.</div>
+<div><div style="font-weight:600; color:#16181D;">8. Quieter run controls</div>Full-width coloured Run buttons replaced by a small Rerun next to the token count. Before running, each box explains what it does and what it waits for.</div>
+<div><div style="font-weight:600; color:#16181D;">9. Straight connections</div>Ports sit on the header line, so the three AI steps connect in one line. Neutral grey lines.</div>
+<div><div style="font-weight:600; color:#16181D;">10. Type</div>Instrument Sans for UI, IBM Plex Mono for labels and numbers, larger body text.</div>
+</div>
+<div style="display:flex; flex-direction:column; gap:10px;">
+<span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#565B64; font-weight:600;">Before</span>
+<img src="before.png" alt="Current version" style="width:100%; display:block; border-radius:6px; border:1px solid #DCDFE4;">
+</div>
+</div>
+
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;pipelineState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Results&quot;,&quot;Not run yet&quot;],&quot;default&quot;:&quot;Results&quot;,&quot;tsType&quot;:&quot;'Results' | 'Not run yet'&quot;},&quot;transcripts&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Excerpt&quot;,&quot;Full text&quot;],&quot;default&quot;:&quot;Excerpt&quot;,&quot;tsType&quot;:&quot;'Excerpt' | 'Full text'&quot;}}">
+const THEMES = [
+  { title: 'No visibility into referral status', count: 2, quotes: [{ who: 'P3', text: 'So I rang the specialist clinic just to check, and they said they couldn’t see any referral for me.' }, { who: 'P3', text: 'I think it was about a week later and I still hadn’t heard anything.' }] },
+  { title: 'Multiple repetitive phone calls required', count: 2, quotes: [{ who: 'P3', text: 'So I rang the specialist clinic just to check…' }, { who: 'P3', text: 'That kind of threw me because… I’d been told it was already sent.' }] },
+  { title: 'Unclear responsibility for follow-up', count: 1, quotes: [{ who: 'P3', text: '…then I started wondering if I was actually supposed to call someone myself.' }] },
+  { title: 'Lack of proactive confirmation communication', count: 1, quotes: [{ who: 'P3', text: 'I think it was about a week later and I still hadn’t heard anything.' }] },
+  { title: 'Assumption that referral is automatically handled', count: 1, quotes: [{ who: 'P3', text: 'She told me the referral would be sent through, so I just thought… okay, that’s done, I guess I just wait for them to contact me.' }] },
+];
+const FLAGS = [
+  { sev: 'high', theme: 'Assumption that referral is automatically handled', title: 'Patient assumes referral is completed without verification', category: 'Communication Risk', stage: 'Referral Initiated', reason: 'The participant believed the referral process was finished after the GP said it would be sent, which could delay necessary follow-up.', quote: 'She told me the referral would be sent through, so I just thought… okay, that’s done, I guess I just wait for them to contact me.', who: 'P3' },
+  { sev: 'med', theme: 'Lack of proactive confirmation communication', title: 'No proactive confirmation that referral was sent', category: 'Communication Risk', stage: 'Referral Sent', reason: 'The participant expected a confirmation once the referral was sent and did not receive one.', quote: 'I think it was about a week later and I still hadn’t heard anything.', who: 'P3' },
+  { sev: 'high', theme: 'No visibility into referral status', title: 'Specialist clinic has no record of the referral', category: 'Care Delay Risk', stage: 'Waiting & Tracking', reason: 'The receiving clinic could not find the referral, so care may stall unless the patient chases it.', quote: 'So I rang the specialist clinic just to check, and they said they couldn’t see any referral for me.', who: 'P3' },
+  { sev: 'med', theme: 'Unclear responsibility for follow-up', title: 'Unclear who owns the follow-up', category: 'Ownership Risk', stage: 'Waiting & Tracking', reason: 'The participant was unsure whether they were expected to contact someone themselves.', quote: '…then I started wondering if I was actually supposed to call someone myself.', who: 'P3' },
+  { sev: 'low', theme: 'Multiple repetitive phone calls required', title: 'Conflicting information between services', category: 'Communication Risk', stage: 'Active Follow-up', reason: 'The participant was told the referral had been sent, but the clinic could not see it.', quote: 'That kind of threw me because… I’d been told it was already sent.', who: 'P3' },
+];
+const EDGES = [['p1', 't-in'], ['p2', 't-in'], ['p3', 't-in'], ['t-out', 'j-in'], ['j-out', 's-in'], ['s-out', 'c-in']];
+const STAGES = [
+  { label: '1. Referral Initiated', emotion: 'OPTIMISTIC', friction: false, desc: 'The user receives a referral recommendation from the GP and expects the process to begin.', theme: 'Assumption that referral is automatically handled', insight: 'The participant initially believed the referral process was complete after the GP said it would be sent, reflecting an expectation of automatic handling.', quote: 'She told me the referral would be sent through, so I just thought… okay, that’s done, I guess I just wait for them to contact me.' },
+  { label: '2. Referral Sent', emotion: 'UNCERTAIN', friction: true, desc: 'The GP sends the referral to the specialist, but the user receives no explicit confirmation.', theme: 'Lack of proactive confirmation communication', insight: 'Nothing told the participant the referral had actually gone through, so they had no way to know it was on its way.', quote: 'I think it was about a week later and I still hadn’t heard anything.' },
+  { label: '3. Waiting & Tracking', emotion: 'FRUSTRATED', friction: true, desc: 'The user waits without updates and has no way to check where the referral is.', theme: 'No visibility into referral status', insight: 'The participant started to doubt whether they were supposed to act, with nothing to check progress against.', quote: '…then I started wondering if I was actually supposed to call someone myself.' },
+  { label: '4. Active Follow-up', emotion: 'EXASPERATED', friction: true, desc: 'The user calls the specialist clinic to chase the referral and gets conflicting information.', theme: 'Multiple repetitive phone calls required', insight: 'The clinic had no record of the referral, contradicting what the participant had been told.', quote: 'So I rang the specialist clinic just to check, and they said they couldn’t see any referral for me.' },
+  { label: '5. Resolution', emotion: 'RELIEVED', friction: false, desc: 'The referral is located and the user finally has a clear next step.', theme: null },
+];
+const COACH = [
+  { respondsTo: 'Communication Risk', title: 'Patients think the referral is finished just because the doctor said it would be sent.', stage: 'Referral Initiated', why: 'If the referral never actually leaves the clinic, the patient may wait for care that never arrives, leading to delayed diagnosis or treatment.', steps: ['Add a clear, visible confirmation step in the UI that shows the referral has been queued and will be sent.', 'Include a brief checklist for patients to verify that the referral has been entered into the system before leaving the appointment.'], init: 'approved' },
+  { respondsTo: 'Communication Risk', title: 'Patients receive no notice that their referral was actually sent.', stage: 'Referral Sent', why: 'Without confirmation, patients can’t tell a normal wait from a lost referral, so they may not chase it in time.', steps: ['Send an automatic message when the referral is sent, naming the clinic and the expected wait.', 'Show referral status in the patient’s account so they can check it without calling.'] },
+];
+
+class Component extends DCLogic {
+  state = { openTheme: 0, openFlag: 0, review: {}, paths: [], openStage: 0, openCoach: 0, coachReview: { 0: 'approved' } };
+  canvasRef = React.createRef();
+
+  componentDidMount() {
+    this.recalc();
+    this._t = [setTimeout(() => this.recalc(), 300), setTimeout(() => this.recalc(), 1200)];
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this.recalc());
+    this._onResize = () => this.recalc();
+    window.addEventListener('resize', this._onResize);
+  }
+  componentDidUpdate() { this.recalc(); }
+  componentWillUnmount() { (this._t || []).forEach(clearTimeout); window.removeEventListener('resize', this._onResize); }
+
+  recalc() {
+    const root = this.canvasRef.current; if (!root) return;
+    const R = root.getBoundingClientRect(); const s = (R.width / (root.offsetWidth || 1)) || 1;
+    const pt = id => { const el = root.querySelector('[data-port="' + id + '"]'); if (!el) return null; const r = el.getBoundingClientRect(); return [(r.left + r.width / 2 - R.left) / s, (r.top + r.height / 2 - R.top) / s]; };
+    const f = n => n.toFixed(1);
+    const paths = EDGES.map(([a, b]) => {
+      const A = pt(a), B = pt(b); if (!A || !B) return '';
+      const dx = Math.max(36, (B[0] - A[0]) * 0.5);
+      return `M${f(A[0])} ${f(A[1])} C${f(A[0] + dx)} ${f(A[1])} ${f(B[0] - dx)} ${f(B[1])} ${f(B[0])} ${f(B[1])}`;
+    });
+    const key = paths.join('|');
+    if (key !== this._key) { this._key = key; this.setState({ paths }); }
+  }
+
+  setReview(i, v) {
+    this.setState(s => {
+      const review = { ...s.review };
+      if (v) review[i] = v; else delete review[i];
+      const openFlag = v ? FLAGS.findIndex((_, j) => !review[j]) : i;
+      return { review, openFlag };
+    });
+  }
+
+  renderVals() {
+    const results = (this.props.pipelineState ?? 'Results') === 'Results';
+    const full = (this.props.transcripts ?? 'Excerpt') === 'Full text';
+    const { openTheme, openFlag, review, paths } = this.state;
+    const max = Math.max(...THEMES.map(t => t.count));
+    const themes = THEMES.map((t, i) => ({
+      ...t, open: openTheme === i, pct: Math.round(t.count / max * 100) + '%',
+      rot: openTheme === i ? '90deg' : '0deg', bg: openTheme === i ? '#F6F7F9' : 'transparent',
+      toggle: () => this.setState(s => ({ openTheme: s.openTheme === i ? -1 : i })),
+    }));
+    const n = Object.keys(review).length;
+    const flags = FLAGS.map((fl, i) => {
+      const r = review[i]; const open = openFlag === i;
+      return {
+        ...fl, open, high: fl.sev === 'high', med: fl.sev === 'med', low: fl.sev === 'low',
+        approved: r === 'approved', dismissed: r === 'dismissed', pending: !r, done: !!r,
+        titleColor: r ? '#626771' : '#16181D', bg: open ? '#FFFFFF' : 'transparent',
+        border: open ? '#DCDFE4' : 'transparent', shadow: open ? '0 1px 3px rgba(22,24,29,.06)' : 'none',
+        seg: r === 'approved' ? 'oklch(0.5 0.085 190)' : r === 'dismissed' ? '#B3B8C0' : '#E4E7EB',
+        toggle: () => this.setState(s => ({ openFlag: s.openFlag === i ? -1 : i })),
+        approve: () => this.setReview(i, 'approved'), dismiss: () => this.setReview(i, 'dismissed'), undo: () => this.setReview(i, null),
+      };
+    });
+    const { openStage, openCoach, coachReview } = this.state;
+    const stages = STAGES.map((st, i) => ({ ...st, hasTheme: !!st.theme, open: openStage === i, rot: openStage === i ? '90deg' : '0deg', bg: openStage === i ? '#FFFFFF' : 'transparent', border: openStage === i ? '#DCDFE4' : 'transparent', toggle: () => this.setState(s => ({ openStage: s.openStage === i ? -1 : i })) }));
+    const setC = (i, v) => this.setState(s => { const cr = { ...s.coachReview }; if (v) cr[i] = v; else delete cr[i]; return { coachReview: cr }; });
+    const coach = COACH.map((c, i) => { const r = coachReview[i]; const open = openCoach === i; return { ...c, steps: c.steps.map((t, k) => ({ n: k + 1, text: t })), open, rot: open ? '90deg' : '0deg', bg: open ? '#FFFFFF' : 'transparent', border: open ? '#DCDFE4' : 'transparent', approved: r === 'approved', dismissed: r === 'dismissed', pending: !r, done: !!r, toggle: () => this.setState(s => ({ openCoach: s.openCoach === i ? -1 : i })), approve: () => setC(i, 'approved'), dismiss: () => setC(i, 'dismissed'), undo: () => setC(i, null) }; });
+    const cn = Object.keys(coachReview).length;
+    const solid = results ? paths : paths.slice(0, 3);
+    const dashed = results ? [] : paths.slice(3);
+    return {
+      canvasRef: this.canvasRef,
+      edgesSolid: solid.filter(Boolean).join(' ') || 'M0 0',
+      edgesDashed: dashed.filter(Boolean).join(' ') || 'M0 0',
+      results, empty: !results, excerpt: !full, full,
+      themes, flags, stages, coach,
+      coachPending: results && cn < COACH.length, coachDone: results && cn === COACH.length, coachPill: (COACH.length - cn) + ' to review',
+      reviewLabel: n === FLAGS.length ? 'All 5 flags reviewed' : n + ' of 5 reviewed',
+      pillPending: results && n < FLAGS.length, pillDone: results && n === FLAGS.length,
+      reviewPill: (FLAGS.length - n) + ' to review',
+    };
+  }
+}
+</script>
+</body>
+</html>

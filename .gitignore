@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.server-port
+.DS_Store
+**/.DS_Store
+.firebase/
+test-stitch*
+*.tsbuildinfo

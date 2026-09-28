@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Tablet/kiosk: viewport-fit for notched devices, pinch-zoom locked (the
+         canvas handles its own pinch), web-app metas so "Add to Home Screen"
+         runs chrome-less fullscreen. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AI Canva" />
+    <meta name="theme-color" content="#ffffff" />
+    <!-- Apply the saved colour theme before first paint (see src/lib/theme.ts). -->
+    <script>
+      (function () {
+        var c = "system";
+        try { c = localStorage.getItem("ai-canva-theme") || "system"; } catch (e) {}
+        var dark = c === "dark" || (c !== "light" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+      })();
+    </script>
+    <title>AI Canva</title>
+  </head>
+  <body class="bg-canvas">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
