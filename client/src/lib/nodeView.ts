@@ -43,12 +43,26 @@ export const EMPTY_STATE_COPY: Partial<Record<BoxType, string>> = {
 };
 
 /**
+ * Earlier default box names → current ones. Boards saved before the rename
+ * still store the old titles (they double as `{{Name}}` prompt variables),
+ * so they are only renamed for display.
+ */
+const RENAMED_BOXES: Record<string, string> = {
+  "insight weaver": "Theme Finder",
+  "journey mapper": "Journey Flow",
+  "patient safety reviewer": "Safety Risk Review",
+  "ux coach": "UX Recommendations",
+};
+
+/**
  * The name shown in the header. Stored titles keep their " Box" suffix —
  * they double as `{{Name}}` prompt variables and quote sources — so the
- * suffix is only dropped for display.
+ * suffix is only dropped for display, and old default names show as the
+ * current ones.
  */
 export function displayTitle(title: string): string {
-  return title.replace(/\s+Box$/i, "") || title;
+  const name = title.replace(/\s+Box$/i, "") || title;
+  return RENAMED_BOXES[name.trim().toLowerCase()] ?? name;
 }
 
 /**
@@ -117,6 +131,24 @@ export function resultSummary(
     default:
       return null;
   }
+}
+
+/**
+ * Overall tone of a journey stage, from the sentiment of its themes:
+ * negative only → "negative", negative and positive → "mixed",
+ * positive only → "positive", otherwise "neutral". Drives the point colours
+ * on the journey chart (negative = red, mixed = yellow).
+ */
+export function stageTone(
+  stage: { issues?: { sentiment?: string }[] },
+): "negative" | "mixed" | "positive" | "neutral" {
+  const issues = stage?.issues ?? [];
+  const neg = issues.some((i) => i?.sentiment === "negative");
+  const pos = issues.some((i) => i?.sentiment === "positive");
+  if (neg && pos) return "mixed";
+  if (neg) return "negative";
+  if (pos) return "positive";
+  return "neutral";
 }
 
 /** A journey stage shows friction when any theme mapped to it is negative. */

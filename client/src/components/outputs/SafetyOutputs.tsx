@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Risk } from "../../types";
 import { useBoardStore } from "../../store/boardStore";
-import { AlertIcon, CheckIcon } from "../ui/icons";
+import { AlertIcon, CaretIcon, CheckIcon, CloseIcon } from "../ui/icons";
 
 interface SafetyReviewerOutputProps {
   content: string;
@@ -9,14 +9,19 @@ interface SafetyReviewerOutputProps {
 }
 
 /**
- * Renders Patient Safety Reviewer's structured JSON output as a review list:
- * a segmented progress bar, then every flag as a compact accordion row, then
- * a row per stage that was reviewed and found clear.
+ * Renders the safety review's structured JSON output as a review list: a
+ * segmented progress bar, then every risk as an expandable card, then a row
+ * per stage that was reviewed and found clear.
+ *
+ * Each card always shows the risk summary, an expand arrow and the Approve /
+ * Dismiss buttons — even when collapsed. Decisions are reversible (a
+ * dismissed risk can be approved again and vice versa), so Dismiss applies
+ * straight away without a confirmation step. After a decision the card
+ * collapses and the next unreviewed risk opens.
  *
  * Every risk is approved by default: a card with no recorded decision still
- * flows to UX Coach, it just doesn't count as reviewed. Approving marks it as
- * researcher-confirmed; dismissing (behind a confirm step) withholds it.
- * After a decision the next unreviewed flag opens automatically.
+ * flows to UX Recommendations, it just doesn't count as reviewed. Approving
+ * marks it as researcher-confirmed; dismissing withholds it.
  */
 
 /** Severity chip — only shown when the model output carries a severity. */
@@ -31,11 +36,8 @@ export default function SafetyReviewerOutput({
   content,
   boxId,
 }: SafetyReviewerOutputProps) {
-  // Which card is mid-confirmation. Local state: a half-finished dismissal is
-  // not a decision, so it never reaches the store or Firestore.
-  const [confirming, setConfirming] = useState<string | null>(null);
   // Accordion (view state only). undefined = default to the first
-  // unreviewed flag; null = everything closed.
+  // unreviewed risk; null = everything closed.
   const [openFlag, setOpenFlag] = useState<string | null | undefined>(undefined);
 
   const setApproval = useBoardStore((s) => s.setApproval);
@@ -80,8 +82,8 @@ export default function SafetyReviewerOutput({
   const firstPending = risks.find((r) => !approvals?.[r.id])?.id ?? null;
   const openId = openFlag === undefined ? firstPending ?? risks[0]?.id ?? null : openFlag;
 
-  // Record a decision, then open the next unreviewed flag (after this one,
-  // wrapping around).
+  // Record a decision, collapse this card, then open the next unreviewed risk
+  // (after this one, wrapping around) — or none when all are decided.
   const decide = (riskId: string, status: "approved" | "dismissed") => {
     setApproval(boxId, riskId, status);
     const idx = risks.findIndex((r) => r.id === riskId);
@@ -96,7 +98,7 @@ export default function SafetyReviewerOutput({
         <div className="px-3.5 py-3 border-b border-line-divider flex flex-col gap-[9px]">
           <span className="text-[13px] font-semibold text-ink">
             {reviewedCount === risks.length
-              ? `All ${risks.length} flag${risks.length === 1 ? "" : "s"} reviewed`
+              ? `All ${risks.length} risk${risks.length === 1 ? "" : "s"} reviewed`
               : `${reviewedCount} of ${risks.length} reviewed`}
           </span>
           <div
@@ -124,25 +126,27 @@ export default function SafetyReviewerOutput({
         </div>
       )}
 
-      <div className="p-2 flex flex-col gap-1">
+      <div className="p-2.5 flex flex-col gap-1.5">
         {risks.map((risk) => {
           const decision = approvals?.[risk.id]?.status;
           const isDismissed = decision === "dismissed";
           const isApproved = decision === "approved";
-          const isConfirming = confirming === risk.id;
           const isOpen = openId === risk.id;
           const severity = SEVERITY_STYLE[String((risk as any).severity ?? "").toLowerCase()];
 
           return (
-            <div
-              key={risk.id}
-              className={"acc-row has-shadow" + (isOpen ? " is-open" : "")}
-            >
+            <div key={risk.id} className={"acc-row" + (isOpen ? " is-open" : "")}>
+              {/* Summary row — always visible, with the expand arrow. */}
               <button
                 type="button"
+                aria-expanded={isOpen}
                 onClick={() => setOpenFlag(isOpen ? null : risk.id)}
-                className="acc-head !items-start"
+                className="acc-head nodrag !items-start"
+                title={isOpen ? "Collapse" : "Expand for details"}
               >
+                <span className="mt-[3px]">
+                  <CaretIcon className={"caret" + (isOpen ? " is-open" : "")} />
+                </span>
                 {severity && (
                   <span
                     className={
@@ -157,7 +161,7 @@ export default function SafetyReviewerOutput({
                   <div
                     className={
                       "text-[13.5px] font-semibold leading-[1.35] [text-wrap:pretty] " +
-                      (decision ? "text-ink-muted" : "text-ink")
+                      (isDismissed ? "text-ink-muted line-through decoration-[color:var(--dismissed)]" : "text-ink")
                     }
                   >
                     {risk.summary}
@@ -178,12 +182,11 @@ export default function SafetyReviewerOutput({
                 )}
               </button>
 
+              {/* Details — only when expanded. */}
               {isOpen && (
-                <div className="px-3 pt-0.5 pb-3 flex flex-col gap-2.5">
+                <div className="pl-[35px] pr-3 pt-0.5 flex flex-col gap-2.5 anim-fade-up">
                   <div className="flex flex-wrap gap-1.5">
-                    <span className="chip chip-red !h-[22px] !px-2">
-                      {risk.category}
-                    </span>
+                    <span className="chip chip-red !h-[22px] !px-2">{risk.category}</span>
                     {!decision && (
                       <span className="chip !h-[22px] !px-2 font-medium border border-[color:var(--red-border)] text-[color:var(--red-text)]">
                         Human review required
@@ -207,13 +210,9 @@ export default function SafetyReviewerOutput({
                   <div>
                     <div className="mono-label">Evidence trace</div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                      <span className="chip chip-neutral !h-auto !py-[3px] !px-2">
-                        {risk.stage}
-                      </span>
+                      <span className="chip chip-neutral is-wrap">{risk.stage}</span>
                       <span className="text-ink-icon text-[12px]">→</span>
-                      <span className="chip chip-neutral !h-auto !py-[3px] !px-2 whitespace-normal">
-                        {risk.theme}
-                      </span>
+                      <span className="chip chip-neutral is-wrap">{risk.theme}</span>
                     </div>
                   </div>
 
@@ -228,55 +227,32 @@ export default function SafetyReviewerOutput({
                       </div>
                     </div>
                   ))}
-
-                  {isConfirming ? (
-                    <div className="flex flex-col gap-2">
-                      <p className="m-0 text-[13px] leading-[1.5] text-ink-2">
-                        Remove this flag from UX Coach&apos;s advice?
-                      </p>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            decide(risk.id, "dismissed");
-                            setConfirming(null);
-                          }}
-                          className="btn btn-primary flex-1 !h-8"
-                        >
-                          Yes, dismiss
-                        </button>
-                        <button
-                          onClick={() => setConfirming(null)}
-                          className="btn btn-secondary flex-1 !h-8"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => decide(risk.id, "approved")}
-                        className={
-                          "btn flex-1 !h-8 " +
-                          (isApproved || !decision ? "btn-primary" : "btn-secondary")
-                        }
-                      >
-                        {isApproved && <CheckIcon />}
-                        {isApproved ? "Approved" : "Approve"}
-                      </button>
-
-                      {!isDismissed && (
-                        <button
-                          onClick={() => setConfirming(risk.id)}
-                          className="btn btn-secondary flex-1 !h-8"
-                        >
-                          Dismiss
-                        </button>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
+
+              {/* Actions — visible on every card, collapsed or not. The
+                  current decision is shown as the selected button; clicking
+                  the other one changes it. */}
+              <div className="nodrag flex gap-2 pl-[35px] pr-3 pt-2 pb-3">
+                <button
+                  type="button"
+                  onClick={() => decide(risk.id, "approved")}
+                  aria-pressed={isApproved}
+                  className={"btn flex-1 !h-8 " + (isApproved ? "btn-primary" : "btn-secondary")}
+                >
+                  <CheckIcon />
+                  {isApproved ? "Approved" : "Approve"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => decide(risk.id, "dismissed")}
+                  aria-pressed={isDismissed}
+                  className={"btn flex-1 !h-8 " + (isDismissed ? "btn-primary" : "btn-secondary")}
+                >
+                  <CloseIcon />
+                  {isDismissed ? "Dismissed" : "Dismiss"}
+                </button>
+              </div>
             </div>
           );
         })}
@@ -285,7 +261,7 @@ export default function SafetyReviewerOutput({
         {clearStages.map((stage) => (
           <div
             key={stage}
-            className="flex items-center gap-2.5 px-2.5 py-2 rounded-[9px] border border-dashed border-line-soft"
+            className="flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] border border-dashed border-line-soft"
           >
             <span className="chip chip-violet">{stage}</span>
             <span className="text-[12.5px] text-ink-muted">

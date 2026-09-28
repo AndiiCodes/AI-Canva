@@ -12,9 +12,9 @@ interface InsightWeaverOutputProps {
 }
 
 /**
- * Insight Weaver themes, ranked by mentions (supporting quotes) with a small
- * bar in the step colour. One row open at a time; the first is open by
- * default. Per-theme Rerun lives on the row and shows on hover.
+ * Theme Finder (Insight Weaver) themes as cards, ranked by mentions
+ * (supporting quotes, shown as a count). One card open at a time; the first
+ * is open by default. Per-theme Rerun is always visible on each card.
  */
 export default function InsightWeaverOutput({
   content,
@@ -67,7 +67,6 @@ export default function InsightWeaverOutput({
   const ranked = themes
     .map((theme, index) => ({ theme, index, count: theme.evidence?.length ?? 0 }))
     .sort((a, b) => b.count - a.count || a.index - b.index);
-  const maxCount = Math.max(1, ...ranked.map((r) => r.count));
   const openIndex = openTheme === undefined ? ranked[0]?.index ?? null : openTheme;
 
   const renderThemeCards = (readOnly: boolean) => (
@@ -86,8 +85,8 @@ export default function InsightWeaverOutput({
           No themes found in the research material.
         </div>
       ) : (
-        <div>
-          <div className="flex justify-between pt-2 pb-1 pl-[34px] pr-2.5 mono-label">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between pt-2 pb-0.5 pl-[35px] pr-3 mono-label">
             <span>Theme</span>
             <span>Mentions</span>
           </div>
@@ -95,10 +94,11 @@ export default function InsightWeaverOutput({
             const isOpen = openIndex === i;
             const isRegenerating = regeneratingIndex === i;
             return (
-              <div key={i} className={"acc-row is-sunken" + (isOpen ? " is-open" : "")}>
+              <div key={i} className={"acc-row" + (isOpen ? " is-open" : "")}>
                 <div
                   role="button"
                   tabIndex={0}
+                  aria-expanded={isOpen}
                   onClick={() => setOpenTheme(isOpen ? null : i)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -106,7 +106,7 @@ export default function InsightWeaverOutput({
                       setOpenTheme(isOpen ? null : i);
                     }
                   }}
-                  className="acc-head group !p-2.5 hover:!bg-surface-row"
+                  className="acc-head nodrag"
                 >
                   <CaretIcon className={"caret" + (isOpen ? " is-open" : "")} />
                   <span className="flex-1 min-w-0 text-[13.5px] leading-[1.35] font-medium text-ink [text-wrap:pretty]">
@@ -126,31 +126,22 @@ export default function InsightWeaverOutput({
                         handleReject(i);
                       }}
                       disabled={regeneratingIndex !== null}
-                      className="touch-visible btn btn-secondary btn-sm !h-[26px] !px-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                      className="btn btn-secondary btn-sm !h-[26px] !px-2 flex-none"
                       title="Reject & regenerate this theme"
                     >
                       <RerunIcon size={12} /> Rerun
                     </button>
                   )}
                   <span
-                    className="w-11 h-1.5 flex-none rounded-[3px] bg-[color:var(--bar-track)] overflow-hidden"
-                    aria-hidden
+                    className="min-w-[26px] h-[22px] px-1.5 flex-none grid place-items-center rounded-[6px] bg-surface-muted font-mono text-[12px] font-semibold text-ink"
+                    title={`${count} supporting ${count === 1 ? "quote" : "quotes"}`}
                   >
-                    <span
-                      className="block h-full rounded-[3px]"
-                      style={{
-                        width: `${Math.round((count / maxCount) * 100)}%`,
-                        background: "var(--step-insight)",
-                      }}
-                    />
-                  </span>
-                  <span className="min-w-3 flex-none text-right font-mono text-[12px] font-medium text-ink">
                     {count}
                   </span>
                 </div>
 
                 {isOpen && (
-                  <div className="pl-[34px] pr-2.5 pb-2.5 flex flex-col gap-1.5">
+                  <div className="pl-[35px] pr-3 pt-0.5 pb-3 flex flex-col gap-1.5 anim-fade-up">
                     {theme.description && (
                       <p className="m-0 mb-0.5 text-[13px] leading-[1.5] text-ink-2 [text-wrap:pretty]">
                         {theme.description}
@@ -159,7 +150,7 @@ export default function InsightWeaverOutput({
                     {theme.evidence?.map((ev, j) => (
                       <div
                         key={j}
-                        className="flex gap-2.5 items-start bg-surface border border-line-soft rounded-lg px-[11px] py-[9px] text-[12.5px] leading-[1.5] text-[color:var(--quote-text)]"
+                        className="flex gap-2.5 items-start bg-surface-sunken rounded-lg px-[11px] py-[9px] text-[12.5px] leading-[1.5] text-[color:var(--quote-text)]"
                       >
                         <span
                           className="flex-none mt-px font-mono text-[10.5px] font-semibold px-[5px] py-px rounded bg-ink text-on-ink"

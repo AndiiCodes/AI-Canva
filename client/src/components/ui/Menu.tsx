@@ -48,7 +48,7 @@ export function Menu({ trigger, children, panelClassName = "w-64" }: MenuProps) 
       {open && (
         <div
           className={
-            "absolute right-0 top-full mt-2 z-50 rounded-[10px] bg-surface " +
+            "anim-pop absolute right-0 top-full mt-2 z-50 rounded-[10px] bg-surface " +
             "border border-line [box-shadow:var(--shadow-float)] overflow-hidden " +
             panelClassName
           }

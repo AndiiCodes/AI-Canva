@@ -36,6 +36,10 @@ const nodeTypes = {
 
 const SIDEBAR_WIDTH = 232;
 
+/** Fit the whole board, leaving room for the Add Box panel on the right and
+ *  the zoom / help controls along the bottom. */
+const FIT_PADDING = { top: "56px", left: "48px", right: "272px", bottom: "96px" } as const;
+
 export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean }) {
   const nodes = useBoardStore((s) => s.nodes);
   const edges = useBoardStore((s) => s.edges);
@@ -72,9 +76,9 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
     [nodes],
   );
 
-  // Connectors that carry nothing yet (their source step hasn't run) are
-  // drawn dashed ("waiting"). Presentation only: the stored edges are passed
-  // through untouched apart from an extra class name.
+  // Connector styles (presentation only; stored edges just gain a class):
+  //  - "running": the box it feeds is running → data flows along it;
+  //  - "waiting": its source step hasn't produced anything yet → dashed.
   const styledEdges = useMemo(
     () =>
       edges.map((e) => {
@@ -84,15 +88,27 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
           (!!src.output?.trim() ||
             !!src.content?.trim() ||
             (src.documents || []).some((d) => !d.error && d.text));
-        const waiting = !!src && !hasOutput;
-        const base = (e.className || "").replace(/\s*edge-waiting/g, "");
-        const className = waiting ? (base + " edge-waiting").trim() : base || undefined;
+        const running = boxData[e.target]?.status === "running";
+        const waiting = !running && !!src && !hasOutput;
+        const base = (e.className || "").replace(/\s*edge-(waiting|running)/g, "").trim();
+        const extra = running ? "edge-running" : waiting ? "edge-waiting" : "";
+        const className = [base, extra].filter(Boolean).join(" ") || undefined;
         return className === e.className ? e : { ...e, className };
       }),
     [edges, boxData]
   );
 
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
+
+  // Re-fit the view when the board is replaced (demo load / Reset): the
+  // initial fitView runs before the demo boxes exist. Waits a moment so the
+  // new boxes are measured first.
+  const fitRequest = useBoardStore((s) => s.fitRequest);
+  useEffect(() => {
+    if (!fitRequest) return;
+    const t = setTimeout(() => fitView({ padding: FIT_PADDING, duration: 250 }), 120);
+    return () => clearTimeout(t);
+  }, [fitRequest, fitView]);
 
   // Track mouse movement and update presence
   const onMouseMove = useCallback(
@@ -208,6 +224,26 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
     return () => pane.removeEventListener("touchstart", onTouchStart);
   }, [areaTool, screenToFlowPosition]);
 
+  // Undo / redo: Ctrl+Z (⌘Z), Ctrl+Shift+Z (⌘⇧Z) or Ctrl+Y. Inside a text
+  // field the browser's own text undo applies instead.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey) {
+        e.preventDefault();
+        useBoardStore.getState().undo();
+      } else if ((k === "z" && e.shiftKey) || k === "y") {
+        e.preventDefault();
+        useBoardStore.getState().redo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Escape cancels an in-progress draft and deactivates the tool.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -226,6 +262,10 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
       nodes={displayNodes}
       edges={styledEdges}
       elevateNodesOnSelect={false}
+      // A box only starts dragging after the pointer moves 5px, so a normal
+      // click (which usually wobbles a pixel or two) still opens cards and
+      // presses buttons on the first try.
+      nodeDragThreshold={5}
       onNodeDragStart={onNodeDragStart}
       // Multi-select is Shift+click (React Flow's default is Ctrl/⌘), so that
       // Ctrl/⌘ is free for "drag a box out of its frame" above.
@@ -247,7 +287,11 @@ export default function Canvas({ sidebarOpen = false }: { sidebarOpen?: boolean 
       nodesDraggable={!areaTool}
       className={areaTool ? "area-tool-active" : undefined}
       fitView
-      fitViewOptions={{ padding: 0.3 }}
+      fitViewOptions={{ padding: FIT_PADDING }}
+      // The full demo flow is wider than a screen at React Flow's default
+      // minimum zoom (0.5), which cut off the inputs; allow zooming out
+      // far enough to see the whole board.
+      minZoom={0.2}
       defaultEdgeOptions={{
         animated: true,
       }}

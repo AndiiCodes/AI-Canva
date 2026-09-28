@@ -694,7 +694,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                           </div>
                           <button
                             onClick={() => removeDocument(d.id)}
-                            className="touch-visible w-6 h-6 rounded-md text-ink-icon hover:text-[color:var(--red-text)] hover:bg-[color:var(--red-bg)] flex items-center justify-center flex-none opacity-0 group-hover:opacity-100 transition"
+                            className="w-6 h-6 rounded-md text-ink-icon hover:text-[color:var(--red-text)] hover:bg-[color:var(--red-bg)] flex items-center justify-center flex-none transition"
                             title="Remove this document"
                           >
                             <CloseIcon />
@@ -734,39 +734,67 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
 
           {isAIBox && (
             <div className="min-h-[80px]">
+              {/* Running: what it's doing, over a shimmering placeholder of
+                the output to come. */}
               {isRunning && (
-                <div className="flex items-center gap-2 text-ink-muted text-[13px] py-8 justify-center">
-                  <Spinner size={13} />
-                  <span>{meta.loadingText ?? "Generating..."}</span>
+                <div className="px-4 pt-5 pb-6 flex flex-col gap-4 anim-fade-up">
+                  <div className="flex items-center gap-2 text-ink-muted text-[13px] justify-center">
+                    <Spinner size={13} />
+                    <span>{meta.loadingText ?? "Generating..."}</span>
+                  </div>
+                  <div className="flex flex-col gap-2.5" aria-hidden>
+                    {[92, 78, 85, 64].map((w, i) => (
+                      <div key={i} className="rounded-[10px] border border-line-soft px-3 py-3 flex flex-col gap-2">
+                        <div className="skeleton-line" style={{ width: `${w}%`, animationDelay: `${i * 0.12}s` }} />
+                        <div className="skeleton-line !h-2 opacity-70" style={{ width: `${w - 30}%`, animationDelay: `${i * 0.12 + 0.06}s` }} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
+              {/* Run failed: same centred layout as the empty state, with a
+                red-tinted warning tile, what happened / what's unaffected,
+                the technical message in a details panel, and Try again. */}
               {hasError && !isRunning && (
-                <div className="px-4 py-4 flex flex-col gap-1.5">
-                  <p className="text-[14px] font-semibold text-[color:var(--red-text)]">
-                    {meta.errorTitle ?? "Something went wrong."}
-                  </p>
-                  <p className="text-[13px] leading-[1.5] text-ink-3">
-                    {meta.errorHint}
-                  </p>
-                  <p
-                    className="font-mono text-[11px] text-ink-muted break-words"
-                    title={boxData.error}
+                <div className="px-6 py-7 flex flex-col items-center gap-3 text-center">
+                  <span
+                    className="node-tile !w-9 !h-9 !rounded-[10px]"
+                    style={{ "--tile-color": "var(--red-text)" } as React.CSSProperties}
+                    aria-hidden
                   >
-                    Error: {boxData.error}
-                  </p>
-                  <button
-                    onClick={() => runBox(id)}
-                    className="btn btn-secondary btn-sm self-start mt-1.5"
-                  >
+                    <AlertIcon size={17} strokeWidth={1.9} />
+                  </span>
+                  <div className="flex flex-col gap-1">
+                    <p className="m-0 text-[14px] font-semibold text-ink">
+                      {meta.errorTitle ?? "Something went wrong."}
+                    </p>
+                    {meta.errorHint && (
+                      <p className="m-0 max-w-[300px] text-[13px] leading-[1.5] text-ink-3 [text-wrap:pretty]">
+                        {meta.errorHint}
+                      </p>
+                    )}
+                  </div>
+                  {boxData.error && (
+                    <div className="w-full max-w-[340px] text-left rounded-lg bg-surface-sunken border border-line-soft px-3 py-2">
+                      <div className="mono-label mb-1">Details</div>
+                      <p
+                        className="m-0 font-mono text-[11.5px] leading-[1.5] text-ink-2 [overflow-wrap:anywhere] line-clamp-4"
+                        title={boxData.error}
+                      >
+                        {boxData.error}
+                      </p>
+                    </div>
+                  )}
+                  <button onClick={() => runBox(id)} className="nodrag btn btn-primary mt-0.5">
                     <RerunIcon /> Try again
                   </button>
                 </div>
               )}
 
-              {hasTextOutput &&
-                !hasError &&
-                !isRunning &&
-                (boxType === "insight" ? (
+              {/* Output — keyed by version so a new run fades up into place. */}
+              {hasTextOutput && !hasError && !isRunning && (
+                <div key={boxData.currentVersionId ?? "output"} className="anim-fade-up">
+                {boxType === "insight" ? (
                   <InsightWeaverOutput
                     content={boxData.output}
                     boxId={id}
@@ -783,7 +811,9 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                   <div className="markdown-output text-ink-2 text-[13px] px-3.5 py-3">
                     <ReactMarkdown>{boxData.output}</ReactMarkdown>
                   </div>
-                ))}
+                )}
+                </div>
+              )}
 
               {/* Empty (not run) state: what the step does, Run, and what
                 it's waiting for. Run stays clickable in every state, as
@@ -795,7 +825,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                   </p>
                   <button
                     onClick={() => runBox(id)}
-                    className={"btn " + (isReady ? "btn-primary" : "btn-secondary")}
+                    className={"nodrag btn " + (isReady ? "btn-primary" : "btn-secondary")}
                   >
                     <PlayIcon /> Run
                   </button>
@@ -815,6 +845,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
         {/* Footer — AI boxes: token total · history · settings · Rerun */}
         {isAIBox && (
           <div className="node-footer rounded-b-xl">
+            {/* Buttons below are nodrag so a click never turns into a drag. */}
             <span
               className="font-mono text-[11.5px] text-ink-muted tabular-nums truncate"
               title={
@@ -823,11 +854,13 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                   : undefined
               }
             >
-              {tokens
-                ? `${tokens.totalTokens.toLocaleString()} tokens`
-                : hasTextOutput
-                  ? ""
-                  : "Not run yet"}
+              {hasError
+                ? "Last run failed"
+                : tokens
+                  ? `${tokens.totalTokens.toLocaleString()} tokens`
+                  : hasTextOutput
+                    ? ""
+                    : "Not run yet"}
             </span>
             <div className="flex-1" />
             {!hasError && (
@@ -835,7 +868,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                 <button
                   onClick={() => setShowHistory(!showHistory)}
                   className={
-                    "btn btn-secondary btn-sm btn-icon " + (showHistory ? "is-active" : "")
+                    "nodrag btn btn-secondary btn-sm btn-icon " + (showHistory ? "is-active" : "")
                   }
                   title="Run history: view previous outputs or restore an earlier run"
                   aria-label="Run history"
@@ -845,7 +878,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className={
-                    "btn btn-secondary btn-sm btn-icon " + (showSettings ? "is-active" : "")
+                    "nodrag btn btn-secondary btn-sm btn-icon " + (showSettings ? "is-active" : "")
                   }
                   title="Prompt settings"
                   aria-label="Prompt settings"
@@ -856,7 +889,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                   <button
                     onClick={() => runBox(id)}
                     disabled={isRunning}
-                    className="btn btn-secondary btn-sm"
+                    className="nodrag btn btn-secondary btn-sm"
                   >
                     {isRunning ? <Spinner /> : <RerunIcon />}
                     Rerun

@@ -106,7 +106,7 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
     return (
       <div className="text-ink-muted text-[13px] leading-[1.5] py-8 px-5 text-center">
         {liveRisks.length === 0
-          ? "No safety flags were passed on, so there is nothing to advise on. Run Patient Safety Reviewer first, or restore a dismissed flag."
+          ? "No safety risks were passed on, so there is nothing to advise on. Run Safety Risk Review first, or restore a dismissed risk."
           : "No guidance produced."}
       </div>
     );
@@ -116,14 +116,14 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
     openItem === undefined ? visibleGuidance[0]?.id ?? null : openItem;
 
   return (
-    <div className="nowheel p-2 flex flex-col gap-1">
+    <div className="nowheel p-2.5 flex flex-col gap-1.5 min-w-0">
       <div className="mx-0.5 mb-1 px-3 py-2 rounded-lg bg-surface-sunken text-[12.5px] leading-[1.5] text-ink-3">
         Advisory only. Nothing here changes the pipeline output.
       </div>
 
       {visibleGuidance.length === 0 && researchNext.length === 0 && (
         <div className="text-ink-muted text-[13px] py-6 text-center">
-          All guidance has been dismissed in Safety Reviewer.
+          All guidance has been dismissed in Safety Risk Review.
         </div>
       )}
 
@@ -142,17 +142,18 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
           >
             <button
               type="button"
+              aria-expanded={isOpen}
               onClick={() => setOpenItem(isOpen ? null : item.id)}
-              className="acc-head !items-start !p-2.5"
+              className="acc-head nodrag !items-start"
             >
               <span className="mt-[3px]">
                 <CaretIcon className={"caret" + (isOpen ? " is-open" : "")} />
               </span>
               <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <span className="chip chip-red self-start !text-[11px] whitespace-normal !h-auto min-h-5 py-0.5">
+                <span className="chip chip-red is-wrap self-start !text-[11px]">
                   Responds to · {risk.category}
                 </span>
-                <span className="text-[13.5px] font-semibold leading-[1.4] text-ink [text-wrap:pretty]">
+                <span className="text-[13.5px] font-semibold leading-[1.4] text-ink [text-wrap:pretty] [overflow-wrap:anywhere]">
                   {item.plain_summary}
                 </span>
               </div>
@@ -163,7 +164,7 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
               ) : (
                 <span
                   className="flex-none mt-0.5 font-mono text-[11px] font-semibold text-[color:var(--red-text)]"
-                  title="Human review required — approve or dismiss this flag in Patient Safety Reviewer"
+                  title="Human review required — approve or dismiss this risk in Safety Risk Review"
                 >
                   Review
                 </span>
@@ -171,7 +172,7 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
             </button>
 
             {isOpen && (
-              <div className="pl-[34px] pr-3 pt-0.5 pb-3 flex flex-col gap-3">
+              <div className="pl-[35px] pr-3 pt-0.5 pb-3 flex flex-col gap-3 min-w-0 anim-fade-up">
                 <div className="flex items-center flex-wrap gap-2 text-[12.5px] text-ink-3">
                   Affected journey stage
                   <span className="chip chip-violet">{item.stage}</span>
@@ -205,7 +206,7 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
 
                 <div className="flex items-center gap-2 flex-wrap text-[12px] text-ink-muted">
                   {decision === "approved" ? (
-                    <span className="chip chip-neutral !font-medium">Approved in Safety Reviewer</span>
+                    <span className="chip chip-neutral !font-medium">Approved in Safety Risk Review</span>
                   ) : (
                     <span className="chip !h-[22px] !px-2 font-medium border border-[color:var(--red-border)] text-[color:var(--red-text)]">
                       Human review required
@@ -219,7 +220,7 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
       })}
 
       {researchNext.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-line-divider flex flex-col gap-1">
+        <div className="mt-2 pt-2 border-t border-line-divider flex flex-col gap-1.5 min-w-0">
           <div className="mono-label px-2.5 pt-1 pb-1">Research next</div>
 
           {researchNext.map((research) => {
@@ -232,22 +233,23 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
               >
                 <button
                   type="button"
+                  aria-expanded={isExpanded}
                   onClick={() =>
                     setExpandedResearch(isExpanded ? null : research.id)
                   }
-                  className="acc-head !items-start"
+                  className="acc-head nodrag !items-start"
                 >
                   <span className="mt-[3px]">
                     <CaretIcon className={"caret" + (isExpanded ? " is-open" : "")} />
                   </span>
-                  <span className="flex-1 min-w-0 text-[13.5px] leading-[1.4] font-medium text-ink [text-wrap:pretty]">
+                  <span className="flex-1 min-w-0 text-[13.5px] leading-[1.4] font-medium text-ink [text-wrap:pretty] [overflow-wrap:anywhere]">
                     {research.question}
                   </span>
                 </button>
 
                 {isExpanded && (
-                  <div className="pl-[34px] pr-3 pb-3">
-                    <p className="m-0 text-[13px] leading-[1.5] text-ink-2">
+                  <div className="pl-[35px] pr-3 pt-0.5 pb-3 min-w-0 anim-fade-up">
+                    <p className="m-0 text-[13px] leading-[1.5] text-ink-2 [overflow-wrap:anywhere]">
                       {research.why}
                     </p>
 
@@ -259,7 +261,7 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
                           return (
                             <span
                               key={riskId}
-                              className="chip chip-neutral !h-auto !py-[3px] !px-2 whitespace-normal"
+                              className="chip chip-neutral is-wrap"
                             >
                               {risk?.summary ?? riskId}
                             </span>

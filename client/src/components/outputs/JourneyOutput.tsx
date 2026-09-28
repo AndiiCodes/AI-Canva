@@ -1,9 +1,10 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   contiguousRuns,
   emotionScore,
   smoothPath,
   stageHasFriction,
+  stageTone,
 } from "../../lib/nodeView";
 import { AlertIcon, CaretIcon } from "../ui/icons";
 
@@ -37,15 +38,31 @@ const SENTIMENT_LABEL: Record<string, string> = {
   neutral: "Observation",
 };
 
-/** Chart geometry (viewBox units; the SVG scales to the node width). */
+/**
+ * Chart geometry. The chart always fits the box width (measured, so the
+ * viewBox is 1:1 with screen pixels and text never scales) — no sideways
+ * scrolling. CHART_MIN_W is only the size used before the first measure.
+ */
 const CHART_MIN_W = 468;
 const CHART_H = 168;
 /**
- * Minimum width per stage column (px). With many stages the chart keeps
- * this spacing and scrolls sideways inside the box instead of squashing
- * the labels together.
+ * Below this width per stage the labels switch to a compact form: number +
+ * two-line name, with the emotion word moved to the tooltip (it's also in
+ * the stage list underneath).
  */
-const MIN_STAGE_W = 96;
+const COMPACT_STAGE_W = 100;
+
+/**
+ * Point colour per stage tone: negative = red, mixed = yellow; positive and
+ * neutral stages keep the step colour. Friction (any negative theme) is red
+ * on the band and the stage labels.
+ */
+const TONE_COLOR: Record<ReturnType<typeof stageTone>, string> = {
+  negative: "var(--red-text)",
+  mixed: "var(--amber-dot)",
+  positive: "var(--step-journey)",
+  neutral: "var(--step-journey)",
+};
 const PAD_TOP = 26;
 const PAD_BOTTOM = 30;
 
@@ -56,6 +73,19 @@ export default function JourneyMapperOutput({
   const [openStage, setOpenStage] = useState<number | null>(0);
   // Unique gradient id — several Journey boxes can share one page.
   const gradientId = "jmfill-" + useId().replace(/:/g, "");
+  // Chart width follows the box (resizing the box re-lays the chart out).
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [chartW, setChartW] = useState(CHART_MIN_W);
+  useEffect(() => {
+    const el = chartRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([entry]) => {
+      const w = Math.round(entry.contentRect.width);
+      if (w > 0) setChartW(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [content]);
 
   let stages: Stage[] = [];
   let parseError = false;
@@ -90,10 +120,12 @@ export default function JourneyMapperOutput({
 
   const n = stages.length;
   const friction = stages.map(stageHasFriction);
+  const tones = stages.map(stageTone);
   const frictionCount = friction.filter(Boolean).length;
   const bands = contiguousRuns(friction);
-  const CHART_W = Math.max(CHART_MIN_W, n * MIN_STAGE_W);
+  const CHART_W = chartW;
   const colW = CHART_W / n;
+  const compact = colW < COMPACT_STAGE_W;
   const usable = CHART_H - PAD_TOP - PAD_BOTTOM;
   const points: [number, number][] = stages.map((s, i) => [
     colW * i + colW / 2,
@@ -109,23 +141,25 @@ export default function JourneyMapperOutput({
 
   return (
     <div className="nowheel px-4 pt-3.5">
-      <div className="mono-label mb-2">Emotion by stage</div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="mono-label">Emotion by stage</span>
+        <span className="font-mono text-[10.5px] text-ink-faint">↑ more positive</span>
+      </div>
 
-      {/* Horizontal scroll only when the stages need more room than the box. */}
-      <div className="nodrag overflow-x-auto -mx-4 px-4">
-      <div className="relative" style={{ minWidth: n * MIN_STAGE_W }}>
+      <div ref={chartRef} className="relative">
         {/* Friction band(s): one per run of contiguous friction stages,
           from the chart top through the stage labels. */}
         {bands.map(([a, b], k) => (
           <div
             key={`band-${a}`}
-            className="absolute top-0 bottom-0 rounded-t-md bg-[color:var(--amber-band)]"
+            className="chart-band absolute top-0 bottom-0 rounded-t-lg bg-[color:var(--red-band)]"
             style={{ left: pct(a), width: pct(b - a + 1) }}
           >
             {k === 0 && (
-              <div className="absolute left-0 top-2 pl-2.5 flex items-center gap-[5px] font-mono text-[10.5px] font-semibold tracking-[.06em] uppercase text-[color:var(--amber-text)] whitespace-nowrap">
+              <div className="absolute left-0 top-2 pl-2.5 flex items-center gap-[5px] font-mono text-[10.5px] font-semibold tracking-[.06em] uppercase text-[color:var(--red-text)] whitespace-nowrap">
                 <AlertIcon />
-                Friction · {frictionCount} {frictionCount === 1 ? "stage" : "stages"}
+                Friction · {frictionCount}
+                {compact ? "" : frictionCount === 1 ? " stage" : " stages"}
               </div>
             )}
           </div>
@@ -143,54 +177,94 @@ export default function JourneyMapperOutput({
               <stop offset="1" stopColor="var(--step-journey)" stopOpacity="0" />
             </linearGradient>
           </defs>
-          {area && <path d={area} fill={`url(#${gradientId})`} />}
+          {/* Faint guides: top (most positive), middle and baseline. */}
+          {[0, 0.5, 1].map((f) => (
+            <line
+              key={f}
+              x1={0}
+              x2={CHART_W}
+              y1={PAD_TOP + usable * f}
+              y2={PAD_TOP + usable * f}
+              stroke="var(--divider-soft)"
+              strokeWidth={1}
+              strokeDasharray={f === 1 ? undefined : "3 4"}
+            />
+          ))}
+          {/* A dotted drop line from each point to its stage label below. */}
+          {points.map(([x, y], i) => (
+            <line
+              key={`drop-${i}`}
+              x1={x}
+              x2={x}
+              y1={y + 7}
+              y2={CHART_H}
+              stroke="var(--border)"
+              strokeWidth={1}
+              strokeDasharray="1.5 3.5"
+            />
+          ))}
+          {area && <path className="chart-area" d={area} fill={`url(#${gradientId})`} />}
           <path
+            className="chart-line"
+            pathLength={1}
             d={line}
             fill="none"
             stroke="var(--step-journey)"
             strokeWidth={2.5}
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
-          {points.map(([x, y], i) =>
-            i === lowest ? (
-              <circle
-                key={i}
-                cx={x}
-                cy={y}
-                r={5.5}
-                fill="var(--step-journey)"
-                stroke="var(--surface)"
-                strokeWidth={2}
-              />
-            ) : (
-              <circle
-                key={i}
-                cx={x}
-                cy={y}
-                r={4.5}
-                fill="var(--surface)"
-                stroke="var(--step-journey)"
-                strokeWidth={2}
-              />
-            ),
-          )}
-          {n > 1 && (
-            <text
-              x={points[lowest][0]}
-              // Below the point when there's room, otherwise above it, so the
-              // label never sits on the curve or the axis.
-              y={
-                points[lowest][1] + 22 <= CHART_H - 6
-                  ? points[lowest][1] + 22
-                  : points[lowest][1] - 12
-              }
-              // Keep it inside the chart at the first / last column.
-              textAnchor={lowest === 0 ? "start" : lowest === n - 1 ? "end" : "middle"}
-              style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, fill: "var(--meta-text)" }}
+          {/* One point per stage, coloured by the stage's tone (negative =
+              red, mixed = yellow, otherwise the step colour). They pop in
+              one after another as the line draws; the lowest is larger. */}
+          {points.map(([x, y], i) => (
+            <circle
+              key={i}
+              className="chart-point"
+              style={{ animationDelay: `${0.2 + (i / Math.max(1, n - 1)) * 0.7}s` }}
+              cx={x}
+              cy={y}
+              r={i === lowest ? 6.5 : 5.5}
+              fill={TONE_COLOR[tones[i]]}
+              stroke="var(--surface)"
+              strokeWidth={2}
             >
-              Lowest point
-            </text>
-          )}
+              <title>
+                {`${stages[i].stage_name}${stages[i].emotion ? ` — ${stages[i].emotion}` : ""} (${tones[i]})`}
+              </title>
+            </circle>
+          ))}
+          {/* "Lowest point" as a small pill: below the point when there's
+              room, otherwise above it; kept inside the chart at the edges. */}
+          {n > 1 &&
+            (() => {
+              const [px, py] = points[lowest];
+              const w = 84;
+              const h = 18;
+              const cx = Math.min(Math.max(px, w / 2 + 2), CHART_W - w / 2 - 2);
+              const top = py + 12 + h <= CHART_H - 2 ? py + 12 : py - 12 - h;
+              return (
+                <g className="chart-area" style={{ animationDelay: "0.9s" }}>
+                  <rect
+                    x={cx - w / 2}
+                    y={top}
+                    width={w}
+                    height={h}
+                    rx={h / 2}
+                    fill="var(--surface)"
+                    stroke="var(--divider-soft)"
+                  />
+                  <text
+                    x={cx}
+                    y={top + h / 2 + 3.5}
+                    textAnchor="middle"
+                    style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, fill: "var(--meta-text)" }}
+                  >
+                    Lowest point
+                  </text>
+                </g>
+              );
+            })()}
         </svg>
 
         <div
@@ -200,22 +274,30 @@ export default function JourneyMapperOutput({
           {stages.map((stage, i) => (
             <div
               key={i}
-              className="px-1.5 pt-2.5 pb-3.5 flex flex-col items-center gap-[5px] text-center"
+              className={
+                "pt-2.5 pb-3.5 flex flex-col items-center text-center min-w-0 " +
+                (compact ? "px-1 gap-1" : "px-1.5 gap-[5px]")
+              }
+              title={
+                stage.stage_name +
+                (stage.emotion ? ` — ${stage.emotion}` : "") +
+                (friction[i] ? " (friction)" : "")
+              }
             >
               <span className="font-mono text-[10.5px] text-ink-faint">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <span
-                className="text-[12.5px] font-semibold leading-[1.3] text-ink break-words line-clamp-2"
-                title={stage.stage_name}
+                className={
+                  "font-semibold break-words line-clamp-2 " +
+                  (compact ? "text-[11.5px] leading-[1.25] " : "text-[12.5px] leading-[1.3] ") +
+                  (friction[i] ? "text-[color:var(--red-text)]" : "text-ink")
+                }
               >
                 {stage.stage_name}
               </span>
-              {stage.emotion && (
-                <span
-                  className="font-mono text-[10.5px] tracking-[.05em] uppercase text-ink-3 break-words line-clamp-2"
-                  title={stage.emotion}
-                >
+              {stage.emotion && !compact && (
+                <span className="font-mono text-[10.5px] tracking-[.05em] uppercase text-ink-3 break-words line-clamp-2">
                   {stage.emotion}
                 </span>
               )}
@@ -223,10 +305,27 @@ export default function JourneyMapperOutput({
           ))}
         </div>
       </div>
+
+      {/* Legend for the point and label colours. */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10.5px] text-ink-muted">
+        {[
+          { c: "var(--red-text)", l: "Negative" },
+          { c: "var(--amber-dot)", l: "Mixed" },
+          { c: "var(--step-journey)", l: "Positive / neutral" },
+        ].map((k) => (
+          <span key={k.l} className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ background: k.c }} aria-hidden />
+            {k.l}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-[3px] bg-[color:var(--red-band)] border border-[color:var(--red-border)]" aria-hidden />
+          Friction
+        </span>
       </div>
 
-      {/* Stage list — the existing expandable detail. */}
-      <div className="mt-3 -mx-2 pb-2 flex flex-col gap-1">
+      {/* Stage list — the existing expandable detail, one card per stage. */}
+      <div className="mt-3.5 -mx-1 pb-3 flex flex-col gap-1.5">
         {stages.map((stage, i) => {
           const isOpen = openStage === i;
           const issues = stage.issues ?? [];
@@ -235,15 +334,22 @@ export default function JourneyMapperOutput({
             <div key={i} className={"acc-row" + (isOpen ? " is-open" : "")}>
               <button
                 type="button"
+                aria-expanded={isOpen}
                 onClick={() => setOpenStage(isOpen ? null : i)}
-                className="acc-head"
+                className="acc-head nodrag"
               >
                 <CaretIcon className={"caret" + (isOpen ? " is-open" : "")} />
+                <span
+                  className="w-2 h-2 flex-none rounded-full"
+                  style={{ background: TONE_COLOR[tones[i]] }}
+                  title={tones[i]}
+                  aria-hidden
+                />
                 <span className="flex-1 min-w-0 text-[13.5px] font-semibold text-ink truncate">
                   {i + 1}. {stage.stage_name}
                 </span>
                 {friction[i] && (
-                  <span className="chip chip-amber">
+                  <span className="chip chip-red">
                     <AlertIcon size={11} strokeWidth={2.2} />
                     Friction
                   </span>
@@ -256,7 +362,7 @@ export default function JourneyMapperOutput({
               </button>
 
               {isOpen && (
-                <div className="pl-[34px] pr-3 pb-3 flex flex-col gap-2.5">
+                <div className="pl-[35px] pr-3 pt-0.5 pb-3 flex flex-col gap-2.5 anim-fade-up">
                   <p className="m-0 text-[13px] leading-[1.5] text-ink-2 [text-wrap:pretty]">
                     {stage.stage_description}
                   </p>
@@ -279,7 +385,7 @@ export default function JourneyMapperOutput({
                             className={
                               "font-mono text-[10.5px] tracking-[.04em] uppercase " +
                               (issue.sentiment === "negative"
-                                ? "text-[color:var(--amber-text)] font-semibold"
+                                ? "text-[color:var(--red-text)] font-semibold"
                                 : "text-ink-faint")
                             }
                           >

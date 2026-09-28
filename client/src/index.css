@@ -49,6 +49,7 @@
   --amber-text: #7a5316;
   --amber-dot: #dda23a;
   --red-bg: #f9e6e3;
+  --red-band: #fcf0ee;
   --red-border: #edbdb6;
   --red-text: #b02a22;
   --violet-bg: #eeebf8;
@@ -152,6 +153,7 @@
   --amber-text: #e8c47c;
   --amber-dot: #dda23a;
   --red-bg: #43211e;
+  --red-band: #2b1c1b;
   --red-border: #6e3630;
   --red-text: #f2a39a;
   --violet-bg: #2c2745;
@@ -341,6 +343,76 @@ select,
   border-color: var(--area-border);
 }
 
+/* ===== Motion =====
+   A few short, quiet animations (≤ 0.3s, except the chart line draw).
+   All of them are switched off for people who prefer reduced motion. */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@keyframes draw-line {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes dash-flow {
+  to { stroke-dashoffset: -10; }
+}
+/* New output appearing in a box; details opening in a card. */
+.anim-fade-up { animation: fade-up 0.24s ease-out both; }
+/* Menus / popovers / help card opening. */
+.anim-pop { animation: pop-in 0.16s ease-out both; transform-origin: top right; }
+.anim-pop.from-bottom-left { transform-origin: bottom left; }
+/* Skeleton lines while a box is running. */
+.skeleton-line {
+  height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface-muted) 0%, var(--surface-sunken) 50%, var(--surface-muted) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s linear infinite;
+}
+/* Journey chart: line draws in, area and points follow. */
+.chart-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw-line 0.9s ease-out 0.05s forwards;
+}
+.chart-area { animation: fade-in 0.5s ease-out 0.35s both; }
+.chart-point {
+  transform-box: fill-box;
+  transform-origin: center;
+  /* "backwards" (not "both") so the hover scale below still applies once
+     the pop-in has finished. */
+  animation: pop-in 0.25s ease-out backwards;
+  transition: transform 0.15s ease;
+  cursor: default;
+}
+.chart-point:hover { transform: scale(1.3); }
+.chart-band { animation: fade-in 0.4s ease-out both; }
+/* Buttons: a slight press (transition set on .btn below). */
+.btn:active:not(:disabled) { transform: scale(0.98); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 /* Tooltip above a box icon (components/ui/Tooltip.tsx) */
 .tip {
   position: relative;
@@ -416,7 +488,7 @@ select,
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, transform 0.08s ease;
 }
 .btn:disabled { cursor: not-allowed; opacity: 0.6; }
 .btn-primary { border: none; background: var(--ink); color: var(--on-ink); }
@@ -473,27 +545,28 @@ select,
   color: var(--quote-text);
 }
 
-/* Accordion rows used by every output */
+/* Expandable cards used by every output (themes, stages, risks,
+   recommendations, research questions). Each item is a clearly outlined
+   rounded card at all times — not only on hover — and the open card lifts
+   slightly with a stronger border. */
 .acc-row {
-  border-radius: 9px;
-  border: 1px solid transparent;
-  transition: background-color 0.15s ease;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--divider-soft);
+  border-radius: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .acc-row.is-open {
-  background: var(--surface);
   border-color: var(--border);
+  box-shadow: var(--shadow-card);
 }
-.acc-row.is-open.is-sunken {
-  background: var(--surface-sunken);
-  border-color: transparent;
-}
-.acc-row.is-open.has-shadow { box-shadow: var(--shadow-card); border-radius: 10px; }
 .acc-head {
   width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 10px;
+  padding: 10px 11px;
   text-align: left;
   cursor: pointer;
   border-radius: 9px;
@@ -504,6 +577,20 @@ select,
   transition: background-color 0.15s ease;
 }
 .acc-head:hover { background: var(--surface-sunken); }
+.acc-row.is-open > .acc-head { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+
+/* Chips whose text can be long (evidence trace, research links) wrap
+   inside the card instead of overflowing it. */
+.chip.is-wrap {
+  height: auto;
+  min-height: 22px;
+  flex: 0 1 auto;
+  max-width: 100%;
+  padding: 3px 8px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
 
 /* ===== Dark-mode compatibility for screens not yet on the tokens =====
    Admin / Facilitator boards, modals, the checklist, the help card and the
@@ -627,6 +714,12 @@ select,
 .react-flow__edge.edge-waiting .react-flow__edge-path {
   stroke: var(--edge-waiting);
   stroke-dasharray: 4 5;
+}
+/* The connector feeding a box that is running shows data flowing in. */
+.react-flow__edge.edge-running .react-flow__edge-path {
+  stroke: var(--text-faint);
+  stroke-dasharray: 5 5;
+  animation: dash-flow 0.6s linear infinite;
 }
 .react-flow__edge.selected .react-flow__edge-path {
   stroke: var(--ink);

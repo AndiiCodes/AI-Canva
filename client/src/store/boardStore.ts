@@ -48,6 +48,7 @@ import { filterApproved } from "../lib/approvals.js";
 import { hashInput } from "../lib/inputHash.ts";
 import { buildDemoBoard } from "../lib/demoBoard.js";
 import { detachFromFrames } from "../lib/areas.js";
+import { createHistory, isUserPatch, restoreBoxData } from "../lib/history.js";
 
 function makeId(): string {
   return `box-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -60,6 +61,15 @@ function scheduleSave() {
   saveTimer = setTimeout(() => {
     useBoardStore.getState().saveToFirestore();
   }, 1000);
+}
+
+// === Undo / redo (lib/history.ts) ===
+// Snapshots are taken BEFORE each user edit. Kept outside the store state so
+// they're never persisted or synced.
+const history = createHistory();
+function recordEdit(key: string) {
+  const { nodes, edges, boxData } = useBoardStore.getState();
+  history.record(key, { nodes, edges, boxData });
 }
 
 // === Collaboration helpers ===
@@ -249,7 +259,19 @@ interface BoardState {
    * Restores the showcase board to its starting state, discarding whatever
    * the last visitor did to it.
    */
-  resetDemoBoard: () => void;
+  resetDemoBoard: (opts?: { record?: boolean }) => void;
+  /** Undo / redo the user's last edit (Ctrl+Z / Ctrl+Shift+Z). */
+  undo: () => void;
+  redo: () => void;
+  /** Records an undo step for an edit made outside the store actions. */
+  recordHistory: (key: string) => void;
+  /** Forgets all undo steps (e.g. when a different board is loaded). */
+  clearHistory: () => void;
+  /**
+   * Bumped when the board is replaced wholesale (demo load / reset) so the
+   * canvas re-fits its view to the new boxes. Not persisted.
+   */
+  fitRequest: number;
   /** Programmatic edge creation — used by the Agent box to wire the boxes it
    *  makes. Dedupes and rejects self-connections like a manual connect. */
   connectBoxes: (sourceId: string, targetId: string) => boolean;
@@ -285,6 +307,7 @@ export const useBoardStore = create<BoardState>()(
   persist(
     (set, get) => ({
       nodes: [],
+      fitRequest: 0,
       edges: [],
       boxData: {},
       currentBoardId: null,
@@ -295,16 +318,30 @@ export const useBoardStore = create<BoardState>()(
       activeUsers: [],
 
       onNodesChange: (changes) => {
+        // Undo steps for user edits only: dragging (one step per drag),
+        // resizing by hand, deleting. Selection and React Flow's own size
+        // measurements are not edits.
+        const move = changes.some((c) => c.type === "position");
+        const removed = changes.filter((c) => c.type === "remove");
+        const resized = changes.find(
+          (c) => c.type === "dimensions" && (c as any).setAttributes,
+        );
+        if (removed.length) recordEdit("remove:" + removed.map((c) => (c as any).id).join(","));
+        else if (resized) recordEdit("resize:" + (resized as any).id);
+        else if (move) recordEdit("move");
         set({ nodes: applyNodeChanges(changes, get().nodes) });
         scheduleSave();
       },
 
       onEdgesChange: (changes) => {
+        const removed = changes.filter((c) => c.type === "remove");
+        if (removed.length) recordEdit("edge-remove:" + removed.map((c) => (c as any).id).join(","));
         set({ edges: applyEdgeChanges(changes, get().edges) });
         scheduleSave();
       },
 
       onConnect: (connection) => {
+        recordEdit(`connect:${connection.source}->${connection.target}`);
         set({
           edges: rfAddEdge({ ...connection, animated: true }, get().edges),
         });
@@ -313,6 +350,7 @@ export const useBoardStore = create<BoardState>()(
 
       addBox: (type, position) => {
         const id = makeId();
+        recordEdit("add:" + id);
         const meta = BOX_TYPES[type];
         const node: Node = {
           id,
@@ -359,6 +397,7 @@ export const useBoardStore = create<BoardState>()(
 
       addArea: (rect, fill, border) => {
         const id = makeId().replace("box-", "area-");
+        recordEdit("add:" + id);
         const node: Node = {
           id,
           type: "area",
@@ -375,6 +414,7 @@ export const useBoardStore = create<BoardState>()(
       },
 
       setAreaColor: (id, fill, border) => {
+        recordEdit("area-color:" + id);
         set({
           nodes: get().nodes.map((n) =>
             n.id === id ? { ...n, data: { ...n.data, fill, border } } : n,
@@ -387,6 +427,8 @@ export const useBoardStore = create<BoardState>()(
         const nodes = get().nodes;
         const next = detachFromFrames(nodes, boxId);
         if (next === nodes) return;
+        // Same key as the drag it starts, so detach + move undo together.
+        recordEdit("move");
         set({ nodes: next });
         scheduleSave();
       },
@@ -394,6 +436,11 @@ export const useBoardStore = create<BoardState>()(
       updateBoxData: (id, patch) => {
         const current = get().boxData[id];
         if (!current) return;
+        // Typing, uploads, prompt edits, approvals… are undoable; AI-run
+        // updates (status, output versions, tokens) are not.
+        if (isUserPatch(patch as Record<string, unknown>)) {
+          recordEdit(`data:${id}:${Object.keys(patch).sort().join(",")}`);
+        }
         set({
           boxData: {
             ...get().boxData,
@@ -413,17 +460,22 @@ export const useBoardStore = create<BoardState>()(
         });
       },
 
-      resetDemoBoard: () => {
+      resetDemoBoard: (opts) => {
+        // The Reset button is undoable; the automatic demo load is not.
+        if (opts?.record === false) history.clear();
+        else recordEdit("reset:" + Date.now());
         const demo = buildDemoBoard();
         set({
           nodes: demo.nodes,
           edges: demo.edges,
           boxData: demo.boxData,
+          fitRequest: get().fitRequest + 1,
         });
         scheduleSave();
       },
 
       setBoxName: (id, name) => {
+        recordEdit("name:" + id);
         set({
           nodes: get().nodes.map((n) =>
             n.id === id ? { ...n, data: { ...n.data, title: name } } : n,
@@ -433,6 +485,7 @@ export const useBoardStore = create<BoardState>()(
       },
 
       deleteBox: (id) => {
+        recordEdit("delete:" + id);
         set({
           nodes: get().nodes.filter((n) => n.id !== id),
           edges: get().edges.filter((e) => e.source !== id && e.target !== id),
@@ -442,6 +495,34 @@ export const useBoardStore = create<BoardState>()(
         });
         scheduleSave();
       },
+
+      undo: () => {
+        const { nodes, edges, boxData } = get();
+        const snap = history.undo({ nodes, edges, boxData });
+        if (!snap) return;
+        set({
+          nodes: snap.nodes,
+          edges: snap.edges,
+          boxData: restoreBoxData(snap.boxData, get().boxData),
+        });
+        scheduleSave();
+      },
+
+      redo: () => {
+        const { nodes, edges, boxData } = get();
+        const snap = history.redo({ nodes, edges, boxData });
+        if (!snap) return;
+        set({
+          nodes: snap.nodes,
+          edges: snap.edges,
+          boxData: restoreBoxData(snap.boxData, get().boxData),
+        });
+        scheduleSave();
+      },
+
+      recordHistory: (key) => recordEdit(key),
+
+      clearHistory: () => history.clear(),
 
       setBoxStatus: (id, status, error) => {
         get().updateBoxData(id, { status, error });
@@ -454,6 +535,7 @@ export const useBoardStore = create<BoardState>()(
           (e) => e.source === sourceId && e.target === targetId,
         );
         if (exists) return false;
+        recordEdit(`connect:${sourceId}->${targetId}`);
         set({
           edges: rfAddEdge(
             {
@@ -491,6 +573,7 @@ export const useBoardStore = create<BoardState>()(
       // --- Firestore board operations ---
 
       createNewBoard: async (title) => {
+        history.clear();
         const user = useAuthStore.getState().user;
         if (!user) return;
         const boardId = makeId();
@@ -520,6 +603,7 @@ export const useBoardStore = create<BoardState>()(
       },
 
       loadBoardFromFirestore: async (boardId) => {
+        history.clear();
         const board = await loadBoard(boardId);
         if (!board) return;
         console.log(

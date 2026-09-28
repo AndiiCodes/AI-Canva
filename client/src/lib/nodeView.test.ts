@@ -7,13 +7,28 @@ import {
   resultSummary,
   safetyReviewCounts,
   sourceCode,
+  stageTone,
   tileText,
 } from "./nodeView.js";
 
 describe("displayTitle / tileText", () => {
   it("drops the Box suffix for display only", () => {
-    expect(displayTitle("Insight Weaver Box")).toBe("Insight Weaver");
+    expect(displayTitle("Theme Finder Box")).toBe("Theme Finder");
     expect(displayTitle("Participant P1")).toBe("Participant P1");
+  });
+  it("shows old default box names as the new ones", () => {
+    expect(displayTitle("Insight Weaver Box")).toBe("Theme Finder");
+    expect(displayTitle("Journey Mapper Box")).toBe("Journey Flow");
+    expect(displayTitle("Patient Safety Reviewer Box")).toBe("Safety Risk Review");
+    expect(displayTitle("UX Coach")).toBe("UX Recommendations");
+    expect(displayTitle("My Insight Weaver")).toBe("My Insight Weaver");
+  });
+  it("classifies a journey stage's tone from its themes", () => {
+    const s = (...sent: string[]) => ({ issues: sent.map((sentiment) => ({ sentiment })) });
+    expect(stageTone(s("negative"))).toBe("negative");
+    expect(stageTone(s("negative", "positive"))).toBe("mixed");
+    expect(stageTone(s("positive", "neutral"))).toBe("positive");
+    expect(stageTone(s())).toBe("neutral");
   });
   it("codes participants; everything else gets an icon (null)", () => {
     expect(tileText("text", "Participant P3")).toBe("P3");

@@ -203,7 +203,7 @@ export default function App() {
           boardTitle: "Demo research canvas",
           currentBoardId: null,
         });
-        useBoardStore.getState().resetDemoBoard();
+        useBoardStore.getState().resetDemoBoard({ record: false });
       }
       return;
     }

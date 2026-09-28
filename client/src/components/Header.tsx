@@ -114,10 +114,10 @@ function Header({
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex items-center gap-2.5 flex-shrink-0">
           <div className="logo-tile" aria-hidden>
-            AI
+            RC
           </div>
           <span className="text-[14px] font-semibold text-ink hidden sm:block">
-            AI Canva
+            Research Canvas
           </span>
         </div>
 

@@ -45,15 +45,15 @@ export function isValidAreaSize(rect: Rect): boolean {
   return rect.width >= MIN_AREA_SIZE && rect.height >= MIN_AREA_SIZE;
 }
 /**
- * Group frames that hug their boxes. A frame node with `data.fit = { ids, pad }`
- * keeps its stored top-left corner (its caption is anchored there) but its
- * size follows the boxes inside: right/bottom edge = furthest box edge + pad.
- * Box sizes come from React Flow's measurements, so auto-height boxes that
- * grow after a run stretch the frame with them. Display only — the returned
- * nodes are not written back to the store.
- *
- * Once someone resizes the frame by hand (React Flow stores width/height on
- * the node), it stops following its boxes and keeps that size.
+ * Outer group frames (`data.fit = { ids, pad, header }`) are fixed visual
+ * containers around their boxes:
+ *  - they are placed and sized from the boxes' bounding box (plus `pad`
+ *    on the sides/bottom and a `header` row on top for the caption), so a
+ *    box that grows, or is moved further out in any direction, stays inside;
+ *  - they can't be selected, dragged or resized, and let pointer events
+ *    through, so dragging on a frame pans the canvas.
+ * Box sizes come from React Flow's measurements (auto-height boxes stretch
+ * the frame after a run). Display only — nothing is written to the store.
  */
 export function fitGroupFrames<
   N extends {
@@ -64,6 +64,9 @@ export function fitGroupFrames<
     width?: number;
     height?: number;
     measured?: { width?: number; height?: number };
+    draggable?: boolean;
+    selectable?: boolean;
+    focusable?: boolean;
   },
 >(nodes: N[]): N[] {
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -72,23 +75,40 @@ export function fitGroupFrames<
     h: n.measured?.height ?? n.height ?? (Number(n.style?.height) || 0),
   });
   return nodes.map((frame) => {
-    const fit = frame.data?.fit as { ids: string[]; pad: number } | undefined;
-    if (!fit || frame.width || frame.height) return frame;
+    const fit = frame.data?.fit as { ids: string[]; pad: number; header?: number } | undefined;
+    if (!fit) return frame;
+    const fixed = {
+      ...frame,
+      draggable: false,
+      selectable: false,
+      focusable: false,
+      style: { ...frame.style, pointerEvents: "none" },
+    };
+    let left = Infinity;
+    let top = Infinity;
     let right = -Infinity;
     let bottom = -Infinity;
     for (const id of fit.ids) {
       const child = byId.get(id);
       if (!child) continue;
       const { w, h } = size(child);
-      if (!w || !h) return frame; // not measured yet — keep the stored size
+      if (!w || !h) return fixed; // not measured yet — keep the stored box
+      left = Math.min(left, child.position.x);
+      top = Math.min(top, child.position.y);
       right = Math.max(right, child.position.x + w);
       bottom = Math.max(bottom, child.position.y + h);
     }
-    if (!isFinite(right) || !isFinite(bottom)) return frame;
-    const width = Math.round(right + fit.pad - frame.position.x);
-    const height = Math.round(bottom + fit.pad - frame.position.y);
-    if (frame.style?.width === width && frame.style?.height === height) return frame;
-    return { ...frame, style: { ...frame.style, width, height } };
+    if (!isFinite(left)) return fixed;
+    const header = fit.header ?? fit.pad;
+    return {
+      ...fixed,
+      position: { x: Math.round(left - fit.pad), y: Math.round(top - header) },
+      style: {
+        ...fixed.style,
+        width: Math.round(right - left + fit.pad * 2),
+        height: Math.round(bottom - top + header + fit.pad),
+      },
+    };
   });
 }
 

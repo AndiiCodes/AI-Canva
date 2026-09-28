@@ -1,7 +1,6 @@
 import type { Edge, Node } from "@xyflow/react";
 import { BOX_TYPES } from "../types.js";
 import type { BoxData, BoxDocument, BoxType } from "../types.js";
-import { GROUP_LABEL_COLOR } from "./nodeView.js";
 import { NEUTRAL_AREA } from "./areas.js";
 
 import p1 from "../fixtures/transcripts/participant-p1.txt?raw";
@@ -14,9 +13,10 @@ import p4 from "../fixtures/transcripts/participant-p4.txt?raw";
  * that reads them. Built in code rather than saved to Firestore so the demo
  * can always be restored.
  *
- * The inputs are deliberately NOT wired to Insight Weaver: connecting them is
- * part of the walkthrough. The four AI boxes are wired to each other, since
- * nobody wants to redraw the pipeline between visitors.
+ * The flow reads left to right in three numbered groups: 1 Research inputs
+ * (P1–P4, all wired into Theme Finder so the demo can run straight away),
+ * 2 the AI research pipeline, 3 the research summary. The pipeline row is
+ * centred on the input stack so the four input connectors fan in evenly.
  *
  * Box ids are fixed strings so that a reset overwrites the same boxData entries.
  */
@@ -50,7 +50,8 @@ const PIPELINE: { id: string; type: BoxType }[] = [
  * AI → AI connectors run straight. Sizes follow the design reference.
  */
 const GROUP_HEADER = 46;
-const GROUP_GAP = 72;
+/** Room between the groups for the connectors to curve. */
+const GROUP_GAP = 120;
 const INPUT_GROUP_PAD = 16;
 const PIPELINE_GROUP_PAD = 20;
 
@@ -67,9 +68,11 @@ const INPUT_Y = [0, 1, 2, 3].map(
 );
 
 const PIPELINE_GROUP_X = INPUT_GROUP_X + INPUT_WIDTH + INPUT_GROUP_PAD * 2 + GROUP_GAP;
-const PIPELINE_GROUP_Y = INPUT_GROUP_Y;
+/** Pipeline headers line up with the middle of the input stack (between the
+ *  P1 and P4 headers), so the P1–P4 → Theme Finder connectors fan in evenly. */
+const PIPELINE_Y = Math.round((INPUT_Y[0] + INPUT_Y[3]) / 2);
+const PIPELINE_GROUP_Y = PIPELINE_Y - GROUP_HEADER;
 const PIPELINE_X = PIPELINE_GROUP_X + PIPELINE_GROUP_PAD;
-const PIPELINE_Y = PIPELINE_GROUP_Y + GROUP_HEADER;
 const PIPELINE_STEP_GAP = 72;
 /** Pipeline nodes are auto-height (capped at 860px by .box-node.is-auto);
  *  the frame is sized for the cap so a fully grown box still fits. */
@@ -77,7 +80,7 @@ const PIPELINE_HEIGHT = 860;
 /** Node widths per step, from the design reference. */
 const PIPELINE_WIDTH: Partial<Record<BoxType, number>> = {
   insight: 440,
-  journey: 600,
+  journey: 720,
   safety: 460,
   coach: 460,
 };
@@ -159,12 +162,10 @@ const SUMMARY_AREA_Y = PIPELINE_GROUP_Y;
  * browser holding an older copy of the demo (guest mode, see App.tsx) is
  * switched to the current one.
  */
-export const DEMO_VERSION = 4;
+export const DEMO_VERSION = 6;
 
 /** Neutral group-frame fill/border (design tokens group-fill / group-border). */
 const GROUP_FRAME = { fill: NEUTRAL_AREA.fill, border: NEUTRAL_AREA.border };
-/** Captions sit centred in the 46px header row of their frame. */
-const CAPTION_OFFSET = { x: 16, y: 11 };
 
 /**
  * Builds a fresh copy of the demo board. Returns new objects every call, so
@@ -175,33 +176,13 @@ export function buildDemoBoard(): DemoBoard {
   const nodes: Node[] = [];
   const data: Record<string, BoxData> = {};
 
-  function labelNode(
-    id: string,
-    text: string,
-    x: number,
-    y: number,
-    color: string,
-  ): void {
-    nodes.push({
-      id,
-      type: "label",
-      position: { x, y },
-      data: {
-        boxType: "label",
-        title: text,
-      },
-    });
-
-    data[id] = boxData("label", {
-      content: text,
-      labelColor: color,
-    });
-  }
-
-  // `fit` lets Canvas grow/shrink the frame around its boxes as they
-  // resize (see fitGroupFrames); width/height here are the starting size.
+  // Outer group frames are fixed visual containers: `fit` makes Canvas size
+  // and place them around their boxes (see fitGroupFrames), and they can't
+  // be selected, dragged or resized — dragging on one pans the canvas. The
+  // caption is drawn by AreaNode in the frame's 46px header row.
   function groupFrame(
     id: string,
+    caption: string,
     x: number,
     y: number,
     width: number,
@@ -214,12 +195,13 @@ export function buildDemoBoard(): DemoBoard {
       position: { x, y },
       style: { width, height },
       zIndex: -1,
-      data: { ...GROUP_FRAME, fit },
+      data: { ...GROUP_FRAME, caption, fit: { ...fit, header: GROUP_HEADER } },
     });
   }
 
   groupFrame(
     "demo-input-area",
+    "1 · Research inputs",
     INPUT_GROUP_X,
     INPUT_GROUP_Y,
     INPUT_GROUP_WIDTH,
@@ -228,6 +210,7 @@ export function buildDemoBoard(): DemoBoard {
   );
   groupFrame(
     "demo-pipeline-area",
+    "2 · AI research pipeline",
     PIPELINE_GROUP_X,
     PIPELINE_GROUP_Y,
     PIPELINE_GROUP_WIDTH,
@@ -236,33 +219,12 @@ export function buildDemoBoard(): DemoBoard {
   );
   groupFrame(
     "demo-summary-area",
+    "3 · Research summary",
     SUMMARY_AREA_X,
     SUMMARY_AREA_Y,
     SUMMARY_AREA_WIDTH,
     SUMMARY_AREA_HEIGHT,
     { ids: ["demo-summary"], pad: PIPELINE_GROUP_PAD },
-  );
-
-  labelNode(
-    "demo-input-label",
-    "Research Inputs",
-    INPUT_GROUP_X + CAPTION_OFFSET.x,
-    INPUT_GROUP_Y + CAPTION_OFFSET.y,
-    GROUP_LABEL_COLOR,
-  );
-  labelNode(
-    "demo-pipeline-label",
-    "AI Research Pipeline",
-    PIPELINE_GROUP_X + CAPTION_OFFSET.x + 4,
-    PIPELINE_GROUP_Y + CAPTION_OFFSET.y,
-    GROUP_LABEL_COLOR,
-  );
-  labelNode(
-    "demo-summary-label",
-    "Research Summary",
-    SUMMARY_AREA_X + CAPTION_OFFSET.x + 4,
-    SUMMARY_AREA_Y + CAPTION_OFFSET.y,
-    GROUP_LABEL_COLOR,
   );
 
   TRANSCRIPTS.forEach((t, i) => {
@@ -299,12 +261,21 @@ export function buildDemoBoard(): DemoBoard {
     pipelineX += width + PIPELINE_STEP_GAP;
   });
 
-  const edges: Edge[] = PIPELINE.slice(0, -1).map((box, i) => ({
-    id: `demo-edge-${box.id}-${PIPELINE[i + 1].id}`,
-    source: box.id,
-    target: PIPELINE[i + 1].id,
-    animated: true,
-  }));
+  const edges: Edge[] = [
+    // Every participant feeds Theme Finder, so the demo runs end to end.
+    ...[...TRANSCRIPTS.map((t) => t.id), DOCUMENT_TRANSCRIPT.id].map((id) => ({
+      id: `demo-edge-${id}-${PIPELINE[0].id}`,
+      source: id,
+      target: PIPELINE[0].id,
+      animated: true,
+    })),
+    ...PIPELINE.slice(0, -1).map((box, i) => ({
+      id: `demo-edge-${box.id}-${PIPELINE[i + 1].id}`,
+      source: box.id,
+      target: PIPELINE[i + 1].id,
+      animated: true,
+    })),
+  ];
 
   // The summary reads every pipeline box by type, so it stands alone —
   // no connectors to or from it.

@@ -194,7 +194,7 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
     defaultHeight: 420,
   },
   insight: {
-    label: "Insight Weaver",
+    label: "Theme Finder",
     icon: "🔍",
     color: "#60a5fa",
     description:
@@ -213,7 +213,7 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
     defaultHeight: 600,
   },
   journey: {
-    label: "Journey Mapper",
+    label: "Journey Flow",
     icon: "🗺️",
     color: "#a78bfa",
     description:
@@ -233,7 +233,7 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
     defaultHeight: 600,
   },
   safety: {
-    label: "Patient Safety Reviewer",
+    label: "Safety Risk Review",
     icon: "🩺",
     color: "#ef4444",
     description:
@@ -253,7 +253,7 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
     defaultHeight: 600,
   },
   coach: {
-    label: "UX Coach",
+    label: "UX Recommendations",
     icon: "🎓",
     color: "#84cc16",
     description:

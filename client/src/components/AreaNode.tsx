@@ -39,8 +39,15 @@ function AreaNodeInner({ id, data, selected }: NodeProps) {
             "--area-border": isNeutral ? "var(--group-border)" : border,
           } as CSSProperties
         }
-        title="Area — drag to move, select to resize or recolour"
+        title={data?.caption ? undefined : "Area — drag to move, select to resize or recolour"}
       >
+        {/* Outer group frames (demo board) carry their caption in the
+            46px header row; they're fixed containers, see fitGroupFrames. */}
+        {typeof data?.caption === "string" && (
+          <div className="absolute left-4 top-0 h-[46px] flex items-center font-mono text-[11px] font-semibold tracking-[.08em] uppercase text-ink-3 select-none">
+            {data.caption}
+          </div>
+        )}
         {selected && (
           <>
             {/* Colour picker — neutral or very light shades only, so areas
