@@ -33,7 +33,8 @@ export interface ChecklistItem {
   doneAt: number;
 }
 
-export type BoxStatus = "idle" | "running" | "done" | "error";
+/** "queued": waiting for an upstream box that is still running to finish. */
+export type BoxStatus = "idle" | "queued" | "running" | "done" | "error";
 
 /**
  * A document attached to a Documents box. All fields are always defined (no

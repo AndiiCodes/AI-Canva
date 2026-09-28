@@ -253,6 +253,9 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   }
 
   const isRunning = boxData.status === "running";
+  const isQueued = boxData.status === "queued";
+  // Running or waiting in the queue: the Run controls are unavailable.
+  const isBusy = isRunning || isQueued;
   const hasError = boxData.status === "error";
   const hasTextOutput = boxData.output && boxData.output.trim().length > 0;
 
@@ -281,6 +284,17 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   };
   const waitingOn = upstreamIds.find((u) => !sourceHasOutput(u));
   const isReady = upstreamIds.length > 0 && !waitingOn;
+  // While queued, name the upstream box that is still generating.
+  const busyUpstream = upstreamIds.find((u) => {
+    const status = allBoxData[u]?.status;
+    return status === "running" || status === "queued";
+  });
+  const busyUpstreamTitle = busyUpstream
+    ? displayTitle(
+        (allNodes.find((n) => n.id === busyUpstream)?.data?.title as string) ||
+          "the previous step",
+      )
+    : "the previous step";
   const waitingOnTitle = waitingOn
     ? displayTitle(
         (allNodes.find((n) => n.id === waitingOn)?.data?.title as string) ||
@@ -316,6 +330,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   let pill: { cls: string; label: string; icon?: "check" | "spin" } | null = null;
   if (isAIBox) {
     if (isRunning) pill = { cls: "", label: "Running", icon: "spin" };
+    else if (isQueued) pill = { cls: "is-waiting", label: "Queued" };
     else if (hasError) pill = { cls: "is-error", label: "Error" };
     else if (hasTextOutput) {
       if (review && review.total > 0 && review.reviewed < review.total)
@@ -736,6 +751,18 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
             <div className="min-h-[80px]">
               {/* Running: what it's doing, over a shimmering placeholder of
                 the output to come. */}
+              {/* Queued: waiting for an upstream box to finish first. */}
+              {isQueued && (
+                <div className="px-7 py-8 flex flex-col items-center gap-2 text-center anim-fade-up" role="status">
+                  <div className="flex items-center gap-2 text-ink text-[13.5px] font-semibold">
+                    <Spinner size={13} />
+                    <span>Queued</span>
+                  </div>
+                  <p className="m-0 max-w-[280px] text-[13px] leading-[1.5] text-ink-3 [text-wrap:pretty]">
+                    Will run automatically when {busyUpstreamTitle} finishes generating.
+                  </p>
+                </div>
+              )}
               {isRunning && (
                 <div className="px-4 pt-5 pb-6 flex flex-col gap-4 anim-fade-up">
                   <div className="flex items-center gap-2 text-ink-muted text-[13px] justify-center">
@@ -755,7 +782,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
               {/* Run failed: same centred layout as the empty state, with a
                 red-tinted warning tile, what happened / what's unaffected,
                 the technical message in a details panel, and Try again. */}
-              {hasError && !isRunning && (
+              {hasError && !isBusy && (
                 <div className="px-6 py-7 flex flex-col items-center gap-3 text-center">
                   <span
                     className="node-tile !w-9 !h-9 !rounded-[10px]"
@@ -792,7 +819,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
               )}
 
               {/* Output — keyed by version so a new run fades up into place. */}
-              {hasTextOutput && !hasError && !isRunning && (
+              {hasTextOutput && !hasError && !isBusy && (
                 <div key={boxData.currentVersionId ?? "output"} className="anim-fade-up">
                 {boxType === "insight" ? (
                   <InsightWeaverOutput
@@ -818,7 +845,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
               {/* Empty (not run) state: what the step does, Run, and what
                 it's waiting for. Run stays clickable in every state, as
                 before — the store reports a missing input as an error. */}
-              {!hasTextOutput && !isRunning && !hasError && (
+              {!hasTextOutput && !isBusy && !hasError && (
                 <div className="px-7 py-8 flex flex-col items-center gap-3.5 text-center">
                   <p className="m-0 max-w-[280px] text-[13.5px] leading-[1.55] text-ink-3 [text-wrap:pretty]">
                     {EMPTY_STATE_COPY[boxType] ?? meta.description}
@@ -885,14 +912,14 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                 >
                   <SettingsIcon />
                 </button>
-                {(hasTextOutput || isRunning) && (
+                {(hasTextOutput || isBusy) && (
                   <button
                     onClick={() => runBox(id)}
-                    disabled={isRunning}
+                    disabled={isBusy}
                     className="nodrag btn btn-secondary btn-sm"
                   >
-                    {isRunning ? <Spinner /> : <RerunIcon />}
-                    Rerun
+                    {isBusy ? <Spinner /> : <RerunIcon />}
+                    {isQueued ? "Queued" : "Rerun"}
                   </button>
                 )}
               </>
