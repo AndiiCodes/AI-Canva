@@ -19,7 +19,7 @@ import InsightWeaverOutput from "./outputs/InsightOutput.js";
 import JourneyMapperOutput from "./outputs/JourneyOutput.js";
 import SafetyReviewerOutput from "./outputs/SafetyOutputs.js";
 import CoachOutput from "./outputs/CoachOutput.js";
-import SummaryOutput from "./outputs/SummaryOutput.js";
+import SummaryOutput, { useSummarySections } from "./outputs/SummaryOutput.js";
 import { Menu, MenuItem } from "./ui/Menu.js";
 import {
   AlertIcon,
@@ -34,6 +34,7 @@ import {
   TrashIcon,
   UploadIcon,
   CloseIcon,
+  BoxIcon,
 } from "./ui/icons.js";
 import {
   EMPTY_STATE_COPY,
@@ -58,6 +59,10 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   const setBoxName = useBoardStore((s) => s.setBoxName);
   const isStale = useBoardStore((state) => state.isBoxStale(id));
   const allBoxData = useBoardStore((s) => s.boxData);
+  // PDF Summary: sections built live from the pipeline outputs.
+  const summarySections = useSummarySections(
+    ((data.boxType || type) as BoxType) === "summary",
+  );
 
   const [showSettings, setShowSettings] = useState(false);
   // Documents box: how many files are mid-extraction right now (transient UI
@@ -245,21 +250,13 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
     );
   }
 
-  if (isSummary) {
-    return (
-      <>
-        <NodeResizer minWidth={360} minHeight={300} isVisible={!!selected} />
-
-        <SummaryOutput id={id} selected={selected} />
-      </>
-    );
-  }
-
   const isRunning = boxData.status === "running";
   const hasError = boxData.status === "error";
   const hasTextOutput = boxData.output && boxData.output.trim().length > 0;
 
-  const isAIBox = !isInputBox && !isUtility;
+  // The PDF Summary has no AI run of its own — it updates live from the
+  // pipeline outputs — so it gets the shell but no Run / settings / footer.
+  const isAIBox = !isInputBox && !isUtility && !isSummary;
   const step = STEP_STYLE[boxType];
   const title = (data.title as string) || meta.label + " Box";
   const docs = boxData.documents || [];
@@ -297,8 +294,11 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
           )
         : null;
 
-  const subtitle =
-    isAIBox && hasTextOutput
+  const subtitle = isSummary
+    ? summarySections.length > 0
+      ? `${summarySections.length} ${summarySections.length === 1 ? "section" : "sections"} · updates live`
+      : meta.subtitle
+    : isAIBox && hasTextOutput
       ? resultSummary(boxType, boxData.output, {
           inputCount: upstreamIds.length,
         }) ?? meta.subtitle
@@ -317,6 +317,11 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
       else pill = { cls: "", label: "Done", icon: "check" };
     } else if (isReady) pill = { cls: "is-ready", label: "Ready" };
     else pill = { cls: "is-waiting", label: "Waiting" };
+  } else if (isSummary) {
+    pill =
+      summarySections.length > 0
+        ? { cls: "", label: "Live", icon: "check" }
+        : { cls: "is-waiting", label: "Waiting" };
   }
 
   // Tile + port colours.
@@ -423,13 +428,13 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
           <span
             className={
               "node-tile" +
-              (step ? "" : " is-participant") +
+              (step ? (step.ink ? " is-ink" : "") : " is-participant") +
               (tileEmpty ? " is-empty" : "")
             }
             style={{ background: identity }}
             aria-hidden
           >
-            {tileText(boxType, title)}
+            {tileText(boxType, title) ?? <BoxIcon type={boxType} />}
           </span>
 
           <div className="flex-1 min-w-0">
@@ -716,6 +721,8 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
           {/* AI box output — text (Insight Weaver, Journey Mapper, etc...). Collaboration boxes
             (timer/checklist) never produce an output, so they get neither the
             block nor its "no output yet" placeholder. */}
+          {isSummary && <SummaryOutput sections={summarySections} />}
+
           {isAIBox && (
             <div className="min-h-[80px]">
               {isRunning && (
@@ -920,8 +927,9 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
         )}
 
         {/* Source handle (output) — pipeline boxes only; collaboration boxes
-          (note/label/timer) are standalone annotations with no handles. */}
-        {!isUtility && (
+          (note/label/timer) are standalone annotations with no handles, and
+          the PDF Summary reads the pipeline by type, so it has none either. */}
+        {!isUtility && !isSummary && (
           <Handle
             type="source"
             position={Position.Right}

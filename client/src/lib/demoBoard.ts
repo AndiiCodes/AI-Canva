@@ -144,10 +144,19 @@ const PIPELINE_GROUP_WIDTH =
   PIPELINE_GROUP_PAD * 2;
 const PIPELINE_GROUP_HEIGHT = GROUP_HEADER + PIPELINE_HEIGHT + PIPELINE_GROUP_PAD;
 
-const SUMMARY_AREA_WIDTH = 1200;
-const SUMMARY_AREA_HEIGHT = 900;
+/** The summary document closes the pipeline in its own frame, header aligned. */
+const SUMMARY_WIDTH = 520;
+const SUMMARY_AREA_WIDTH = SUMMARY_WIDTH + PIPELINE_GROUP_PAD * 2;
+const SUMMARY_AREA_HEIGHT = PIPELINE_GROUP_HEIGHT;
 const SUMMARY_AREA_X = PIPELINE_GROUP_X + PIPELINE_GROUP_WIDTH + GROUP_GAP;
 const SUMMARY_AREA_Y = PIPELINE_GROUP_Y;
+
+/**
+ * Bumped whenever the demo layout changes. Every demo node carries it, so a
+ * browser holding an older copy of the demo (guest mode, see App.tsx) is
+ * switched to the current one.
+ */
+export const DEMO_VERSION = 3;
 
 /** Neutral group-frame fill/border (design tokens group-fill / group-border). */
 const GROUP_FRAME = { fill: "rgba(255,255,255,0.45)", border: "rgba(22,24,29,0.1)" };
@@ -288,17 +297,21 @@ export function buildDemoBoard(): DemoBoard {
     animated: true,
   }));
 
+  // The summary reads every pipeline box by type, so it stands alone —
+  // no connectors to or from it.
   nodes.push(
     node(
       "demo-summary",
       "summary",
       `${BOX_TYPES.summary.label} Box`,
-      SUMMARY_AREA_X + 40,
-      SUMMARY_AREA_Y + 60,
+      SUMMARY_AREA_X + PIPELINE_GROUP_PAD,
+      PIPELINE_Y,
+      { width: SUMMARY_WIDTH, height: PIPELINE_HEIGHT },
     ),
   );
-
   data["demo-summary"] = boxData("summary");
+
+  for (const n of nodes) n.data = { ...n.data, demoVersion: DEMO_VERSION };
 
   return { nodes, edges, boxData: data };
 }

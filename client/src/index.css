@@ -266,6 +266,7 @@ select,
   font-weight: 600;
 }
 .node-tile.is-participant { font-size: 11.5px; color: var(--on-ink); }
+.node-tile.is-ink { color: var(--on-ink); }
 .node-tile.is-empty {
   background: var(--surface) !important;
   border: 1.5px dashed var(--edge-waiting);

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { DownloadIcon } from "../ui/icons";
 import { jsPDF } from "jspdf";
 import { useBoardStore } from "../../store/boardStore";
 
@@ -34,7 +35,7 @@ type CoachOutput = {
   }>;
 };
 
-type SummarySection = {
+export type SummarySection = {
   title: string;
   items: string[];
 };
@@ -138,17 +139,20 @@ function buildSummary(
   return sections;
 }
 
-type SummaryNodeProps = {
-  id: string;
-  selected?: boolean;
-};
-
-export default function SummaryNode({ id, selected }: SummaryNodeProps) {
+/**
+ * Alessio's summary logic (feature/summary-box), unchanged: reads the latest
+ * output of each pipeline box on the board, by type, and turns it into
+ * sections. It updates live — there is nothing to run. Shared by the node
+ * header (section count) and the body below.
+ */
+export function useSummarySections(enabled = true): SummarySection[] {
   const nodes = useBoardStore((state) => state.nodes);
   const boxData = useBoardStore((state) => state.boxData);
-  const deleteBox = useBoardStore((state) => state.deleteBox);
 
   const sections = useMemo(() => {
+    // Only the summary box needs this; other boxes skip the parsing.
+    if (!enabled) return [];
+
     const getOutput = (type: BoxType): string => {
       const node = nodes.find((candidate) => candidate.type === type);
 
@@ -165,8 +169,20 @@ export default function SummaryNode({ id, selected }: SummaryNodeProps) {
     const coach = parseOutput<CoachOutput>(getOutput("coach"));
 
     return buildSummary(insight, journey, safety, coach);
-  }, [nodes, boxData]);
+  }, [nodes, boxData, enabled]);
 
+  return sections;
+}
+
+type SummaryNodeProps = {
+  sections: SummarySection[];
+};
+
+/**
+ * PDF Summary body, restyled to the research-canvas theme. The node shell
+ * (tile, title, status, ⋯ menu with Delete) comes from BoxNode.
+ */
+export default function SummaryNode({ sections }: SummaryNodeProps) {
   const handleDownload = () => {
     if (sections.length === 0) {
       return;
@@ -270,120 +286,53 @@ export default function SummaryNode({ id, selected }: SummaryNodeProps) {
     pdf.save("research-summary.pdf");
   };
 
+  if (sections.length === 0) {
+    return (
+      <div className="px-7 py-10 flex flex-col items-center gap-3.5 text-center">
+        <p className="m-0 text-[14px] font-semibold text-ink">No findings yet</p>
+        <p className="m-0 max-w-[300px] text-[13.5px] leading-[1.55] text-ink-3 [text-wrap:pretty]">
+          Run your research pipeline to populate the summary.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={[
-        "relative h-full w-full overflow-hidden rounded-xl border bg-white shadow-sm",
-        selected
-          ? "border-amber-400 ring-2 ring-amber-100"
-          : "border-slate-200",
-      ].join(" ")}
-    >
-      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-2xl">
-            📄
-          </div>
-
-          <div className="min-w-0">
-            <div className="text-base font-bold text-slate-900">
-              PDF Summary
-            </div>
-
-            <div className="mt-0.5 text-sm text-slate-500">
-              Latest findings from your research pipeline
-            </div>
-          </div>
-        </div>
-
-        <div className="nodrag nopan flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={sections.length === 0}
-            title={
-              sections.length === 0 ? "No findings to download" : "Download PDF"
-            }
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="h-5 w-5"
-              aria-hidden="true"
-            >
-              <path d="M12 3v12" />
-              <path d="m7 10 5 5 5-5" />
-              <path d="M5 21h14" />
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => deleteBox(id)}
-            title="Delete PDF Summary"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-500"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="h-5 w-5"
-              aria-hidden="true"
-            >
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-        </div>
+    <div className="nowheel px-4 pt-3.5 pb-4 flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <span className="mono-label">Latest findings from your research pipeline</span>
+        <button
+          type="button"
+          onClick={handleDownload}
+          className="btn btn-secondary btn-sm nodrag flex-none"
+          title="Download PDF"
+        >
+          <DownloadIcon /> Download PDF
+        </button>
       </div>
 
-      <div className="h-[calc(100%-81px)] overflow-y-auto px-6 py-5">
-        {sections.length === 0 ? (
-          <div className="flex h-full items-center justify-center px-4 text-center">
-            <div>
-              <div className="mb-3 text-3xl">📄</div>
-
-              <p className="text-base font-semibold text-slate-600">
-                No findings yet
-              </p>
-
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                Run your research pipeline to populate the summary.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div>
-            {sections.map((section) => (
-              <section
-                key={section.title}
-                className="summary-section mb-7 last:mb-0"
+      {sections.map((section) => (
+        <section
+          key={section.title}
+          className="summary-section pt-3 border-t border-line-divider"
+        >
+          <h3 className="mono-label m-0 mb-2">{section.title}</h3>
+          <ul className="m-0 p-0 list-none flex flex-col gap-2">
+            {section.items.map((item, index) => (
+              <li
+                key={`${section.title}-${index}`}
+                className="flex gap-2.5 items-start text-[13px] leading-[1.5] text-ink-2"
               >
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
-                  {section.title}
-                </h3>
-
-                <ul className="space-y-3">
-                  {section.items.map((item, index) => (
-                    <li
-                      key={`${section.title}-${index}`}
-                      className="flex gap-3 text-base leading-6 text-slate-700"
-                    >
-                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-slate-400" />
-
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+                <span
+                  className="mt-[7px] w-1.5 h-1.5 flex-none rounded-full bg-[color:var(--icon-muted)]"
+                  aria-hidden
+                />
+                <span className="[text-wrap:pretty]">{item}</span>
+              </li>
             ))}
-          </div>
-        )}
-      </div>
+          </ul>
+        </section>
+      ))}
     </div>
   );
 }

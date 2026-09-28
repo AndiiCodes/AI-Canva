@@ -3,7 +3,7 @@ import { BOX_TYPES } from "../types.js";
 import type { BoxType, BoxCategory } from "../types.js";
 import { useReactFlow } from "@xyflow/react";
 import { STEP_STYLE } from "../lib/nodeView.js";
-import { ChevronLeftIcon, CloseIcon } from "./ui/icons.js";
+import { BoxIcon, ChevronLeftIcon, CloseIcon } from "./ui/icons.js";
 
 interface SidebarProps {
   open: boolean;
@@ -93,12 +93,16 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
                       <span
                         className={
                           "node-tile !w-7 !h-7 !rounded-[7px] !text-[12px]" +
-                          (STEP_STYLE[type] ? "" : " is-participant")
+                          (STEP_STYLE[type]
+                            ? STEP_STYLE[type]?.ink
+                              ? " is-ink"
+                              : ""
+                            : " is-participant")
                         }
                         style={{ background: STEP_STYLE[type]?.color ?? "var(--ink)" }}
                         aria-hidden
                       >
-                        {STEP_STYLE[type]?.n ?? meta.label.charAt(0)}
+                        <BoxIcon type={type} size={15} />
                       </span>
                       <span className="flex-1 text-[13px] font-medium text-ink truncate">
                         {meta.label}

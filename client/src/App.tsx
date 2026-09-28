@@ -23,6 +23,7 @@ import { isAdmin, updateUserProfile, heartbeat } from "./lib/admin.js";
 import { fetchUserTokenTotal } from "./lib/firestore.js";
 import { BOX_TYPES } from "./types.js";
 import { SIGN_IN_ENABLED } from "./lib/authMode.js";
+import { DEMO_VERSION } from "./lib/demoBoard.js";
 import type { BoxType } from "./types.js";
 
 export default function App() {
@@ -190,7 +191,13 @@ export default function App() {
     // demo survive a reload). Any other board left in localStorage — e.g. the
     // old "meal planning" starter an earlier version seeded — is replaced.
     if (!SIGN_IN_ENABLED) {
-      const hasDemo = state.nodes.some((n) => n.id.startsWith("demo-"));
+      // Current demo only: an older copy (earlier layout / PDF Summary box)
+      // is replaced once so every visitor gets the latest pipeline.
+      const hasDemo = state.nodes.some(
+        (n) =>
+          n.id.startsWith("demo-") &&
+          (n.data as any)?.demoVersion === DEMO_VERSION,
+      );
       if (!hasDemo) {
         useBoardStore.setState({
           boardTitle: "Demo research canvas",

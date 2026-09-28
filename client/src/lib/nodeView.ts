@@ -6,12 +6,18 @@ import type { BoxType, ItemApproval } from "../types.js";
  * read box outputs, they never change them.
  */
 
-/** Step identity: number tile + one colour for tile, ports and data marks. */
-export const STEP_STYLE: Partial<Record<BoxType, { n: number; color: string }>> = {
-  insight: { n: 1, color: "var(--step-insight)" },
-  journey: { n: 2, color: "var(--step-journey)" },
-  safety: { n: 3, color: "var(--step-safety)" },
-  coach: { n: 4, color: "var(--step-coach)" },
+/**
+ * Step identity: an icon tile (see BoxIcon in components/ui/icons.tsx) plus
+ * one colour for tile, ports and data marks.
+ */
+export const STEP_STYLE: Partial<Record<BoxType, { color: string; ink?: boolean }>> = {
+  insight: { color: "var(--step-insight)" },
+  journey: { color: "var(--step-journey)" },
+  safety: { color: "var(--step-safety)" },
+  coach: { color: "var(--step-coach)" },
+  // The summary document closes the pipeline; it has no data marks of its
+  // own, so it stays neutral (ink tile) rather than taking a fifth colour.
+  summary: { color: "var(--ink)", ink: true },
 };
 
 /** Minimap / static colours (hex fallbacks of the tokens above). */
@@ -22,6 +28,7 @@ export const STEP_HEX: Partial<Record<BoxType, string>> = {
   coach: "#2F7A45",
   text: "#16181D",
   documents: "#16181D",
+  summary: "#16181D",
 };
 
 /** Copy shown in the empty (not run) body of each AI step. */
@@ -44,14 +51,14 @@ export function displayTitle(title: string): string {
   return title.replace(/\s+Box$/i, "") || title;
 }
 
-/** Header tile text: P1…Pn for participants, 1–4 for AI steps. */
-export function tileText(boxType: BoxType, title: string): string {
-  const step = STEP_STYLE[boxType];
-  if (step) return String(step.n);
+/**
+ * Header tile text for participant inputs ("Participant P3" → "P3"). Returns
+ * null for every other box, which shows its type icon instead.
+ */
+export function tileText(boxType: BoxType, title: string): string | null {
+  if (boxType !== "text" && boxType !== "documents") return null;
   const participant = title.match(/\bP\d+\b/i);
-  if (participant) return participant[0].toUpperCase();
-  const first = displayTitle(title).trim().charAt(0);
-  return first ? first.toUpperCase() : "·";
+  return participant ? participant[0].toUpperCase() : null;
 }
 
 /** Short participant code from an evidence source ("Participant P3" → "P3"). */

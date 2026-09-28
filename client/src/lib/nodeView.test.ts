@@ -15,10 +15,11 @@ describe("displayTitle / tileText", () => {
     expect(displayTitle("Insight Weaver Box")).toBe("Insight Weaver");
     expect(displayTitle("Participant P1")).toBe("Participant P1");
   });
-  it("numbers AI steps and codes participants", () => {
-    expect(tileText("journey", "Journey Mapper Box")).toBe("2");
+  it("codes participants; everything else gets an icon (null)", () => {
     expect(tileText("text", "Participant P3")).toBe("P3");
-    expect(tileText("text", "Text Context Box")).toBe("T");
+    expect(tileText("documents", "Participant P4")).toBe("P4");
+    expect(tileText("journey", "Journey Mapper Box")).toBeNull();
+    expect(tileText("text", "Text Context Box")).toBeNull();
   });
   it("shortens evidence sources", () => {
     expect(sourceCode("Participant P4")).toBe("P4");
