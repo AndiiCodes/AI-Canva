@@ -185,13 +185,22 @@ export default function App() {
     if (seedingRef.current || authLoading || user) return;
     seedingRef.current = true;
     const state = useBoardStore.getState();
-    if (state.nodes.length > 0) return;
-    // Sign-in disabled: guests start on the research demo board.
+    // Sign-in disabled: the research demo board is THE board. Load it unless
+    // this browser already holds it (so AI runs and review decisions on the
+    // demo survive a reload). Any other board left in localStorage — e.g. the
+    // old "meal planning" starter an earlier version seeded — is replaced.
     if (!SIGN_IN_ENABLED) {
-      useBoardStore.setState({ boardTitle: "Demo research canvas" });
-      useBoardStore.getState().resetDemoBoard();
+      const hasDemo = state.nodes.some((n) => n.id.startsWith("demo-"));
+      if (!hasDemo) {
+        useBoardStore.setState({
+          boardTitle: "Demo research canvas",
+          currentBoardId: null,
+        });
+        useBoardStore.getState().resetDemoBoard();
+      }
       return;
     }
+    if (state.nodes.length > 0) return;
     const ideaId = addBox("text", { x: 80, y: 200 });
     useBoardStore.getState().updateBoxData(ideaId, {
       content:
