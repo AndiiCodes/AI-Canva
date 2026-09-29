@@ -6,6 +6,11 @@ import { AlertIcon, CaretIcon } from "../ui/icons";
 interface CoachOutputProps {
   content: string;
   boxId: string;
+  /**
+   * An earlier version (see VersionHistory): every card, and no review state,
+   * since the Safety Risk Review decisions belong to its current version.
+   */
+  readOnly?: boolean;
 }
 
 interface CoachGuidance {
@@ -33,9 +38,10 @@ interface CoachOutputData {
 /**
  * UX Coach recommendations as an accordion of cards. Coach items carry no
  * decisions of their own: each card mirrors the Safety Reviewer decision on
- * the risk it responds to (dismissed risks are hidden, as before).
+ * the risk it responds to (dismissed risks are hidden, as before). Earlier
+ * versions show every card without that review state.
  */
-export default function CoachOutput({ content, boxId }: CoachOutputProps) {
+export default function CoachOutput({ content, boxId, readOnly = false }: CoachOutputProps) {
   const [expandedResearch, setExpandedResearch] = useState<string | null>(null);
   // Accordion (view state only); every card starts closed.
   const [openItem, setOpenItem] = useState<string | null>(null);
@@ -88,15 +94,17 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
     );
   }
 
-  const visibleGuidance = guidance.filter((item) => {
-    const risk = risks.find((r) => r.id === item.risk_id);
+  const visibleGuidance = readOnly
+    ? guidance
+    : guidance.filter((item) => {
+        const risk = risks.find((r) => r.id === item.risk_id);
 
-    if (!risk) return false;
+        if (!risk) return false;
 
-    const decision = approvals?.[item.risk_id]?.status;
+        const decision = approvals?.[item.risk_id]?.status;
 
-    return decision !== "dismissed";
-  });
+        return decision !== "dismissed";
+      });
 
   const liveRisks = risks.filter(
     (risk) => approvals?.[risk.id]?.status !== "dismissed",
@@ -105,9 +113,11 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
   if (guidance.length === 0 && researchNext.length === 0) {
     return (
       <div className="text-ink-muted text-[13px] leading-[1.5] py-8 px-5 text-center">
-        {liveRisks.length === 0
-          ? "No safety risks were passed on, so there is nothing to advise on. Run Safety Risk Review first, or restore a dismissed risk."
-          : "No guidance produced."}
+        {readOnly
+          ? "This version has no guidance."
+          : liveRisks.length === 0
+            ? "No safety risks were passed on, so there is nothing to advise on. Run Safety Risk Review first, or restore a dismissed risk."
+            : "No guidance produced."}
       </div>
     );
   }
@@ -127,7 +137,7 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
       {visibleGuidance.map((item) => {
         const risk = risks.find((r) => r.id === item.risk_id);
 
-        if (!risk) return null;
+        if (!risk && !readOnly) return null;
 
         const decision = approvals?.[item.risk_id]?.status;
         const isOpen = openItem === item.id;
@@ -147,14 +157,16 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
                 <CaretIcon className={"caret" + (isOpen ? " is-open" : "")} />
               </span>
               <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <span className="chip chip-red is-wrap self-start !text-[11px]">
-                  Responds to · {risk.category}
-                </span>
+                {!readOnly && risk && (
+                  <span className="chip chip-red is-wrap self-start !text-[11px]">
+                    Responds to · {risk.category}
+                  </span>
+                )}
                 <span className="text-[13.5px] font-semibold leading-[1.4] text-ink [text-wrap:pretty] [overflow-wrap:anywhere]">
                   {item.plain_summary}
                 </span>
               </div>
-              {decision === "approved" ? (
+              {readOnly ? null : decision === "approved" ? (
                 <span className="flex-none mt-0.5 font-mono text-[11px] font-semibold text-[color:var(--step-coach)]">
                   Approved
                 </span>
@@ -201,15 +213,17 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 flex-wrap text-[12px] text-ink-muted">
-                  {decision === "approved" ? (
-                    <span className="chip chip-neutral !font-medium">Approved in Safety Risk Review</span>
-                  ) : (
-                    <span className="chip !h-[22px] !px-2 font-medium border border-[color:var(--red-border)] text-[color:var(--red-text)]">
-                      Human review required
-                    </span>
-                  )}
-                </div>
+                {!readOnly && (
+                  <div className="flex items-center gap-2 flex-wrap text-[12px] text-ink-muted">
+                    {decision === "approved" ? (
+                      <span className="chip chip-neutral !font-medium">Approved in Safety Risk Review</span>
+                    ) : (
+                      <span className="chip !h-[22px] !px-2 font-medium border border-[color:var(--red-border)] text-[color:var(--red-text)]">
+                        Human review required
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -250,7 +264,7 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
                       {research.why}
                     </p>
 
-                    {research.risk_ids.length > 0 && (
+                    {!readOnly && research.risk_ids.length > 0 && (
                       <div className="flex gap-1.5 flex-wrap mt-2.5">
                         {research.risk_ids.map((riskId) => {
                           const risk = risks.find((r) => r.id === riskId);

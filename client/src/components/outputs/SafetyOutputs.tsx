@@ -1,11 +1,17 @@
 import { useState } from "react";
-import type { Risk } from "../../types";
+import type { ItemApproval, Risk } from "../../types";
 import { useBoardStore } from "../../store/boardStore";
 import { AlertIcon, CaretIcon, CheckIcon, CloseIcon } from "../ui/icons";
 
 interface SafetyReviewerOutputProps {
   content: string;
   boxId: string;
+  /**
+   * An earlier version (see VersionHistory): shows the decisions saved with
+   * it and has no Approve / Dismiss buttons.
+   */
+  readOnly?: boolean;
+  savedApprovals?: Record<string, ItemApproval>;
 }
 
 /**
@@ -35,12 +41,15 @@ const SEVERITY_STYLE: Record<string, { label: string; cls: string }> = {
 export default function SafetyReviewerOutput({
   content,
   boxId,
+  readOnly = false,
+  savedApprovals,
 }: SafetyReviewerOutputProps) {
   // Accordion (view state only); null = everything closed.
   const [openFlag, setOpenFlag] = useState<string | null>(null);
 
   const setApproval = useBoardStore((s) => s.setApproval);
-  const approvals = useBoardStore((s) => s.boxData[boxId]?.approvals);
+  const liveApprovals = useBoardStore((s) => s.boxData[boxId]?.approvals);
+  const approvals = readOnly ? savedApprovals : liveApprovals;
 
   let risks: Risk[] = [];
   let clearStages: string[] = [];
@@ -178,7 +187,12 @@ export default function SafetyReviewerOutput({
 
               {/* Details — only when expanded. */}
               {isOpen && (
-                <div className="pl-[35px] pr-3 pt-0.5 flex flex-col gap-2.5 anim-fade-up">
+                <div
+                  className={
+                    "pl-[35px] pr-3 pt-0.5 flex flex-col gap-2.5 anim-fade-up" +
+                    (readOnly ? " pb-3" : "")
+                  }
+                >
                   <div className="flex flex-wrap gap-1.5">
                     <span className="chip chip-red !h-[22px] !px-2">{risk.category}</span>
                     {!decision && (
@@ -227,26 +241,28 @@ export default function SafetyReviewerOutput({
               {/* Actions — visible on every card, collapsed or not. The
                   current decision is shown as the selected button; clicking
                   the other one changes it. */}
-              <div className="nodrag flex gap-2 pl-[35px] pr-3 pt-2 pb-3">
-                <button
-                  type="button"
-                  onClick={() => decide(risk.id, "approved")}
-                  aria-pressed={isApproved}
-                  className={"btn flex-1 !h-8 " + (isApproved ? "btn-primary" : "btn-secondary")}
-                >
-                  <CheckIcon />
-                  {isApproved ? "Approved" : "Approve"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => decide(risk.id, "dismissed")}
-                  aria-pressed={isDismissed}
-                  className={"btn flex-1 !h-8 " + (isDismissed ? "btn-primary" : "btn-secondary")}
-                >
-                  <CloseIcon />
-                  {isDismissed ? "Dismissed" : "Dismiss"}
-                </button>
-              </div>
+              {!readOnly && (
+                <div className="nodrag flex gap-2 pl-[35px] pr-3 pt-2 pb-3">
+                  <button
+                    type="button"
+                    onClick={() => decide(risk.id, "approved")}
+                    aria-pressed={isApproved}
+                    className={"btn flex-1 !h-8 " + (isApproved ? "btn-primary" : "btn-secondary")}
+                  >
+                    <CheckIcon />
+                    {isApproved ? "Approved" : "Approve"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => decide(risk.id, "dismissed")}
+                    aria-pressed={isDismissed}
+                    className={"btn flex-1 !h-8 " + (isDismissed ? "btn-primary" : "btn-secondary")}
+                  >
+                    <CloseIcon />
+                    {isDismissed ? "Dismissed" : "Dismiss"}
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}

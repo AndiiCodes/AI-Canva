@@ -50,6 +50,7 @@ import { pendingUpstream } from "../lib/queue.js";
 import { buildDemoBoard } from "../lib/demoBoard.js";
 import { detachFromFrames } from "../lib/areas.js";
 import { createHistory, isUserPatch, restoreBoxData } from "../lib/history.js";
+import { addVersion, restoreVersion } from "../lib/versions.js";
 
 function makeId(): string {
   return `box-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -960,33 +961,14 @@ export const useBoardStore = create<BoardState>()(
       commitGeneratedOutput: (id: string, output: string) => {
         const current = get().boxData[id];
         if (!current) return;
-
-        const versionId = crypto.randomUUID();
-
-        const entry = {
-          id: versionId,
-          output,
-          timestamp: Date.now(),
-        };
-
-        get().updateBoxData(id, {
-          output,
-          history: [...(current.history ?? []), entry],
-          currentVersionId: versionId,
-        });
+        get().updateBoxData(id, addVersion(current, output, crypto.randomUUID(), Date.now()));
       },
 
       revertToVersion: (id: string, versionId: string) => {
         const data = get().boxData[id];
-        if (!data?.history) return;
-
-        const version = data.history.find((entry) => entry.id === versionId);
-        if (!version) return;
-
-        get().updateBoxData(id, {
-          output: version.output,
-          currentVersionId: version.id,
-        });
+        if (!data) return;
+        const patch = restoreVersion(data, versionId);
+        if (patch) get().updateBoxData(id, patch);
       },
 
       cascadeRerun: async (id: string) => {
@@ -1100,9 +1082,6 @@ export const useBoardStore = create<BoardState>()(
           get().updateBoxData(id, {
             status: "done",
             error: undefined,
-            // A rerun produces new items with new ids, so decisions made on
-            // the previous output no longer refer to anything.
-            approvals: undefined,
             lastRunInputHash: hashInput(namedInputs),
           });
 

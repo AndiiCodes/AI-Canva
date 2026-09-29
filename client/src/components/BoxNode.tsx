@@ -3,7 +3,7 @@ import { Handle, Position, NodeResizer, type NodeProps } from "@xyflow/react";
 import ReactMarkdown from "react-markdown";
 import { useBoardStore } from "../store/boardStore.js";
 import { BOX_TYPES, LABEL_COLORS } from "../types.js";
-import type { BoxType } from "../types.js";
+import type { BoxType, HistoryEntry } from "../types.js";
 import ChecklistPanel from "./ChecklistPanel.js";
 import {
   SUPPORTED_DOC_EXTS,
@@ -19,6 +19,7 @@ import InsightWeaverOutput from "./outputs/InsightOutput.js";
 import JourneyMapperOutput from "./outputs/JourneyOutput.js";
 import SafetyReviewerOutput from "./outputs/SafetyOutputs.js";
 import CoachOutput from "./outputs/CoachOutput.js";
+import VersionHistory from "./outputs/VersionHistory.js";
 import SummaryOutput, { useSummaryReport } from "./outputs/SummaryOutput.js";
 import { reportSections } from "../lib/summaryReport.js";
 import { Tooltip } from "./ui/Tooltip.js";
@@ -57,6 +58,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   const updateBoxData = useBoardStore((s) => s.updateBoxData);
   const deleteBox = useBoardStore((s) => s.deleteBox);
   const runBox = useBoardStore((s) => s.runBox);
+  const revertToVersion = useBoardStore((s) => s.revertToVersion);
   const edges = useBoardStore((s) => s.edges);
   const allNodes = useBoardStore((s) => s.nodes);
   const setBoxName = useBoardStore((s) => s.setBoxName);
@@ -78,8 +80,10 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   // Label box: click-to-edit text (same pattern as the box-name editor).
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [labelDraft, setLabelDraft] = useState("");
-  // history loggin feature
-  const [showHistory, setShowHistory] = useState(false);
+  // Version history (AI boxes) replaces the output while open. It remembers
+  // the version it was opened on, so a new run or a restore — anything that
+  // changes the current version — closes it.
+  const [historyOpenedAt, setHistoryOpenedAt] = useState<string | null>(null);
   // Text box: 3-line excerpt vs full (editable) transcript. View state only.
   const [transcriptExpanded, setTranscriptExpanded] = useState(false);
 
@@ -264,6 +268,31 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   // The PDF Summary has no AI run of its own — it updates live from the
   // pipeline outputs — so it gets the shell but no Run / settings / footer.
   const isAIBox = !isInputBox && !isUtility && !isSummary;
+
+  const versionCount = boxData.history?.length ?? 0;
+  const currentVersion = boxData.currentVersionId ?? "";
+  const historyOpen = historyOpenedAt !== null && historyOpenedAt === currentVersion;
+
+  /** The box's output; with `version`, a read-only earlier version of it. */
+  const renderOutput = (content: string, version?: HistoryEntry) =>
+    boxType === "insight" ? (
+      <InsightWeaverOutput content={content} boxId={id} readOnly={!!version} />
+    ) : boxType === "journey" ? (
+      <JourneyMapperOutput content={content} />
+    ) : boxType === "safety" ? (
+      <SafetyReviewerOutput
+        content={content}
+        boxId={id}
+        readOnly={!!version}
+        savedApprovals={version?.approvals}
+      />
+    ) : boxType === "coach" ? (
+      <CoachOutput content={content} boxId={id} readOnly={!!version} />
+    ) : (
+      <div className="markdown-output text-ink-2 text-[13px] px-3.5 py-3">
+        <ReactMarkdown>{content}</ReactMarkdown>
+      </div>
+    );
 
   // Auto-height: a node with no stored height grows to fit its content (up
   // to a cap, then the body scrolls). Resizing it by hand stores a height,
@@ -820,29 +849,22 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                 </div>
               )}
 
-              {/* Output — keyed by version so a new run fades up into place. */}
-              {hasTextOutput && !hasError && !isBusy && (
-                <div key={boxData.currentVersionId ?? "output"} className="anim-fade-up">
-                {boxType === "insight" ? (
-                  <InsightWeaverOutput
-                    content={boxData.output}
-                    boxId={id}
-                    showHistory={showHistory}
-                    onRevertComplete={() => setShowHistory(false)}
+              {/* Output — keyed by version so a new run fades up into
+                place — or the version history in its place. */}
+              {hasTextOutput && !hasError && !isBusy &&
+                (historyOpen ? (
+                  <VersionHistory
+                    boxType={boxType}
+                    data={boxData}
+                    renderVersion={(entry) => renderOutput(entry.output, entry)}
+                    onRestore={(versionId) => revertToVersion(id, versionId)}
+                    onClose={() => setHistoryOpenedAt(null)}
                   />
-                ) : boxType === "journey" ? (
-                  <JourneyMapperOutput content={boxData.output} />
-                ) : boxType === "safety" ? (
-                  <SafetyReviewerOutput content={boxData.output} boxId={id} />
-                ) : boxType === "coach" ? (
-                  <CoachOutput content={boxData.output} boxId={id} />
                 ) : (
-                  <div className="markdown-output text-ink-2 text-[13px] px-3.5 py-3">
-                    <ReactMarkdown>{boxData.output}</ReactMarkdown>
+                  <div key={boxData.currentVersionId ?? "output"} className="anim-fade-up">
+                    {renderOutput(boxData.output)}
                   </div>
-                )}
-                </div>
-              )}
+                ))}
 
               {/* Empty (not run) state: what the step does, Run, and what
                 it's waiting for. Run stays clickable in every state, as
@@ -895,12 +917,18 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
             {!hasError && (
               <>
                 <button
-                  onClick={() => setShowHistory(!showHistory)}
+                  onClick={() => setHistoryOpenedAt(historyOpen ? null : currentVersion)}
+                  disabled={versionCount === 0}
+                  aria-pressed={historyOpen}
                   className={
-                    "nodrag btn btn-secondary btn-sm btn-icon " + (showHistory ? "is-active" : "")
+                    "nodrag btn btn-secondary btn-sm btn-icon " + (historyOpen ? "is-active" : "")
                   }
-                  title="Run history: view previous outputs or restore an earlier run"
-                  aria-label="Run history"
+                  title={
+                    versionCount
+                      ? "Version history: see earlier outputs of this box and restore one"
+                      : "Version history: each run adds a version"
+                  }
+                  aria-label="Version history"
                 >
                   <HistoryIcon />
                 </button>
