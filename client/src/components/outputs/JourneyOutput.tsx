@@ -5,6 +5,7 @@ import {
   smoothPath,
   stageHasFriction,
   stageTone,
+  TONE_COLOR,
 } from "../../lib/nodeView";
 import { AlertIcon, CaretIcon } from "../ui/icons";
 
@@ -52,17 +53,8 @@ const CHART_H = 168;
  */
 const COMPACT_STAGE_W = 100;
 
-/**
- * Point colour per stage tone: negative = red, mixed = yellow; positive and
- * neutral stages keep the step colour. Friction (any negative theme) is red
- * on the band and the stage labels.
- */
-const TONE_COLOR: Record<ReturnType<typeof stageTone>, string> = {
-  negative: "var(--red-text)",
-  mixed: "var(--amber-dot)",
-  positive: "var(--step-journey)",
-  neutral: "var(--step-journey)",
-};
+/* Points are coloured by stage tone (TONE_COLOR). Friction (any negative
+   theme) is red on the band and the stage labels. */
 const PAD_TOP = 26;
 const PAD_BOTTOM = 30;
 

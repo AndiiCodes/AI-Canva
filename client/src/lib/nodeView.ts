@@ -81,7 +81,7 @@ export function sourceCode(source: string): string {
   return m ? m[0].toUpperCase() : source || "—";
 }
 
-function plural(n: number, one: string, many = one + "s"): string {
+export function plural(n: number, one: string, many = one + "s"): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
@@ -150,6 +150,17 @@ export function stageTone(
   if (pos) return "positive";
   return "neutral";
 }
+
+/**
+ * Colour per stage tone on the journey chart and stage lists: negative =
+ * red, mixed = yellow; positive and neutral stages keep the step colour.
+ */
+export const TONE_COLOR: Record<ReturnType<typeof stageTone>, string> = {
+  negative: "var(--red-text)",
+  mixed: "var(--amber-dot)",
+  positive: "var(--step-journey)",
+  neutral: "var(--step-journey)",
+};
 
 /** A journey stage shows friction when any theme mapped to it is negative. */
 export function stageHasFriction(stage: { issues?: { sentiment?: string }[] }): boolean {
@@ -242,28 +253,39 @@ export function contiguousRuns(flags: boolean[]): [number, number][] {
 }
 
 /**
- * Smooth path through points (Catmull-Rom → cubic bezier). Control points
- * are clamped vertically to their segment so the curve never overshoots
- * past a local minimum/maximum (horizontal tangent at the lowest point).
+ * Cubic bezier segments of a smooth curve through points (Catmull-Rom →
+ * cubic bezier), as [c1x, c1y, c2x, c2y, x, y] from the previous point.
+ * Control points are clamped vertically to their segment so the curve never
+ * overshoots past a local minimum/maximum (horizontal tangent at the lowest
+ * point).
  */
-export function smoothPath(pts: [number, number][]): string {
-  if (pts.length === 0) return "";
-  const f = (n: number) => n.toFixed(1);
-  if (pts.length === 1) return `M${f(pts[0][0])} ${f(pts[0][1])}`;
-  let d = `M${f(pts[0][0])} ${f(pts[0][1])}`;
+export function smoothSegments(pts: [number, number][]): number[][] {
   const clampY = (y: number, a: number, b: number) =>
     Math.min(Math.max(y, Math.min(a, b)), Math.max(a, b));
+  const segments: number[][] = [];
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[i - 1] ?? pts[i];
     const p1 = pts[i];
     const p2 = pts[i + 1];
     const p3 = pts[i + 2] ?? p2;
-    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
-    const c1y = clampY(p1[1] + (p2[1] - p0[1]) / 6, p1[1], p2[1]);
-    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
-    const c2y = clampY(p2[1] - (p3[1] - p1[1]) / 6, p1[1], p2[1]);
-    d += ` C${f(c1x)} ${f(c1y)} ${f(c2x)} ${f(c2y)} ${f(p2[0])} ${f(p2[1])}`;
+    segments.push([
+      p1[0] + (p2[0] - p0[0]) / 6,
+      clampY(p1[1] + (p2[1] - p0[1]) / 6, p1[1], p2[1]),
+      p2[0] - (p3[0] - p1[0]) / 6,
+      clampY(p2[1] - (p3[1] - p1[1]) / 6, p1[1], p2[1]),
+      p2[0],
+      p2[1],
+    ]);
   }
+  return segments;
+}
+
+/** SVG path of the smooth curve through points (see smoothSegments). */
+export function smoothPath(pts: [number, number][]): string {
+  if (pts.length === 0) return "";
+  const f = (n: number) => n.toFixed(1);
+  let d = `M${f(pts[0][0])} ${f(pts[0][1])}`;
+  for (const seg of smoothSegments(pts)) d += ` C${seg.map(f).join(" ")}`;
   return d;
 }
 
