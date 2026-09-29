@@ -14,8 +14,7 @@ interface InsightWeaverOutputProps {
 /**
  * Theme Finder (Insight Weaver) themes as cards, ranked by how many
  * supporting quotes they have (shown as a count). One card open at a time;
- * the first is open by default. Per-theme Rerun is always visible on each
- * card.
+ * all start closed. Per-theme Rerun is always visible on each card.
  */
 export default function InsightWeaverOutput({
   content,
@@ -23,9 +22,8 @@ export default function InsightWeaverOutput({
   showHistory,
   onRevertComplete,
 }: InsightWeaverOutputProps) {
-  // Accordion: index into the ORIGINAL themes array (null = all closed,
-  // undefined = default to the top-ranked theme).
-  const [openTheme, setOpenTheme] = useState<number | null | undefined>(undefined);
+  // Accordion: index into the ORIGINAL themes array (null = all closed).
+  const [openTheme, setOpenTheme] = useState<number | null>(null);
   const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(
     null,
   );
@@ -69,7 +67,6 @@ export default function InsightWeaverOutput({
   const ranked = themes
     .map((theme, index) => ({ theme, index, count: theme.evidence?.length ?? 0 }))
     .sort((a, b) => b.count - a.count || a.index - b.index);
-  const openIndex = openTheme === undefined ? ranked[0]?.index ?? null : openTheme;
 
   const renderThemeCards = (readOnly: boolean) => (
     <>
@@ -93,7 +90,7 @@ export default function InsightWeaverOutput({
             <span>Quotes</span>
           </div>
           {ranked.map(({ theme, index: i, count }) => {
-            const isOpen = openIndex === i;
+            const isOpen = openTheme === i;
             const isRegenerating = regeneratingIndex === i;
             return (
               <div key={i} className={"acc-row" + (isOpen ? " is-open" : "")}>

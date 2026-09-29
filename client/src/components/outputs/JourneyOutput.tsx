@@ -61,8 +61,8 @@ const PAD_BOTTOM = 30;
 export default function JourneyMapperOutput({
   content,
 }: JourneyMapperOutputProps) {
-  // Accordion over the stage list; the first stage is open by default.
-  const [openStage, setOpenStage] = useState<number | null>(0);
+  // Accordion over the stage list; every stage starts closed.
+  const [openStage, setOpenStage] = useState<number | null>(null);
   // Unique gradient id — several Journey boxes can share one page.
   const gradientId = "jmfill-" + useId().replace(/:/g, "");
   // Chart width follows the box (resizing the box re-lays the chart out).
