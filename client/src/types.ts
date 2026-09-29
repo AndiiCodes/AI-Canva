@@ -141,10 +141,17 @@ export interface Risk {
   evidence: Evidence[];
 }
 
+/** One version of an AI box's output (see lib/versions.ts). */
 export interface HistoryEntry {
   id: string;
   timestamp: number;
   output: string;
+  /**
+   * Review decisions made on this version, saved when the box moved on to
+   * another version. Left out, never undefined: Firestore rejects undefined
+   * inside arrays.
+   */
+  approvals?: Record<string, ItemApproval>;
 }
 
 /* A researcher's decision on one output item. */
