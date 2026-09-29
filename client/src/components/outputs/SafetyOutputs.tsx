@@ -16,8 +16,8 @@ interface SafetyReviewerOutputProps {
  * Each card always shows the risk summary, an expand arrow and the Approve /
  * Dismiss buttons — even when collapsed. Decisions are reversible (a
  * dismissed risk can be approved again and vice versa), so Dismiss applies
- * straight away without a confirmation step. After a decision the card
- * collapses and the next unreviewed risk opens.
+ * straight away without a confirmation step. Every card starts closed, and
+ * after a decision the card collapses; nothing opens on its own.
  *
  * Every risk is approved by default: a card with no recorded decision still
  * flows to UX Recommendations, it just doesn't count as reviewed. Approving
@@ -36,9 +36,8 @@ export default function SafetyReviewerOutput({
   content,
   boxId,
 }: SafetyReviewerOutputProps) {
-  // Accordion (view state only). undefined = default to the first
-  // unreviewed risk; null = everything closed.
-  const [openFlag, setOpenFlag] = useState<string | null | undefined>(undefined);
+  // Accordion (view state only); null = everything closed.
+  const [openFlag, setOpenFlag] = useState<string | null>(null);
 
   const setApproval = useBoardStore((s) => s.setApproval);
   const approvals = useBoardStore((s) => s.boxData[boxId]?.approvals);
@@ -79,17 +78,12 @@ export default function SafetyReviewerOutput({
   // Counted from the risks array rather than the approvals map so decisions
   // left over from a previous run can never inflate the total.
   const reviewedCount = risks.filter((r) => approvals?.[r.id]).length;
-  const firstPending = risks.find((r) => !approvals?.[r.id])?.id ?? null;
-  const openId = openFlag === undefined ? firstPending ?? risks[0]?.id ?? null : openFlag;
 
-  // Record a decision, collapse this card, then open the next unreviewed risk
-  // (after this one, wrapping around) — or none when all are decided.
+  // Record a decision and collapse this card if it was open. The next risk
+  // stays closed until the researcher opens it.
   const decide = (riskId: string, status: "approved" | "dismissed") => {
     setApproval(boxId, riskId, status);
-    const idx = risks.findIndex((r) => r.id === riskId);
-    const order = [...risks.slice(idx + 1), ...risks.slice(0, idx)];
-    const next = order.find((r) => !approvals?.[r.id]);
-    setOpenFlag(next ? next.id : null);
+    setOpenFlag((open) => (open === riskId ? null : open));
   };
 
   return (
@@ -131,7 +125,7 @@ export default function SafetyReviewerOutput({
           const decision = approvals?.[risk.id]?.status;
           const isDismissed = decision === "dismissed";
           const isApproved = decision === "approved";
-          const isOpen = openId === risk.id;
+          const isOpen = openFlag === risk.id;
           const severity = SEVERITY_STYLE[String((risk as any).severity ?? "").toLowerCase()];
 
           return (

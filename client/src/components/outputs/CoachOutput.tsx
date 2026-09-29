@@ -37,8 +37,8 @@ interface CoachOutputData {
  */
 export default function CoachOutput({ content, boxId }: CoachOutputProps) {
   const [expandedResearch, setExpandedResearch] = useState<string | null>(null);
-  // Accordion (view state only); undefined = first card open by default.
-  const [openItem, setOpenItem] = useState<string | null | undefined>(undefined);
+  // Accordion (view state only); every card starts closed.
+  const [openItem, setOpenItem] = useState<string | null>(null);
 
   const edges = useBoardStore((s) => s.edges);
   const boxData = useBoardStore((s) => s.boxData);
@@ -112,9 +112,6 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
     );
   }
 
-  const openId =
-    openItem === undefined ? visibleGuidance[0]?.id ?? null : openItem;
-
   return (
     <div className="nowheel p-2.5 flex flex-col gap-1.5 min-w-0">
       <div className="mx-0.5 mb-1 px-3 py-2 rounded-lg bg-surface-sunken text-[12.5px] leading-[1.5] text-ink-3">
@@ -133,7 +130,7 @@ export default function CoachOutput({ content, boxId }: CoachOutputProps) {
         if (!risk) return null;
 
         const decision = approvals?.[item.risk_id]?.status;
-        const isOpen = openId === item.id;
+        const isOpen = openItem === item.id;
 
         return (
           <div
