@@ -12,9 +12,10 @@ interface InsightWeaverOutputProps {
 }
 
 /**
- * Theme Finder (Insight Weaver) themes as cards, ranked by mentions
- * (supporting quotes, shown as a count). One card open at a time; the first
- * is open by default. Per-theme Rerun is always visible on each card.
+ * Theme Finder (Insight Weaver) themes as cards, ranked by how many
+ * supporting quotes they have (shown as a count). One card open at a time;
+ * the first is open by default. Per-theme Rerun is always visible on each
+ * card.
  */
 export default function InsightWeaverOutput({
   content,
@@ -62,8 +63,9 @@ export default function InsightWeaverOutput({
     parseError = true;
   }
 
-  // Rank by mentions, highest first. Keep each theme's original index: the
-  // store's rerunTheme addresses themes by their position in the output.
+  // Rank by supporting quotes, highest first. Keep each theme's original
+  // index: the store's rerunTheme addresses themes by their position in the
+  // output.
   const ranked = themes
     .map((theme, index) => ({ theme, index, count: theme.evidence?.length ?? 0 }))
     .sort((a, b) => b.count - a.count || a.index - b.index);
@@ -88,7 +90,7 @@ export default function InsightWeaverOutput({
         <div className="flex flex-col gap-1.5">
           <div className="flex justify-between pt-2 pb-0.5 pl-[35px] pr-3 mono-label">
             <span>Theme</span>
-            <span>Mentions</span>
+            <span>Quotes</span>
           </div>
           {ranked.map(({ theme, index: i, count }) => {
             const isOpen = openIndex === i;
