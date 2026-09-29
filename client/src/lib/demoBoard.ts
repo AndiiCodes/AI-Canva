@@ -14,9 +14,9 @@ import p4 from "../fixtures/transcripts/participant-p4.txt?raw";
  * can always be restored.
  *
  * The flow reads left to right in three numbered groups: 1 Research inputs
- * (P1–P4, all wired into Theme Finder so the demo can run straight away),
+ * (P1–P4, not connected: you choose which transcripts feed Theme Finder),
  * 2 the AI research pipeline, 3 the research summary. The pipeline row is
- * centred on the input stack so the four input connectors fan in evenly.
+ * centred on the input stack so connectors from the inputs fan in evenly.
  *
  * Box ids are fixed strings so that a reset overwrites the same boxData entries.
  */
@@ -162,7 +162,7 @@ const SUMMARY_AREA_Y = PIPELINE_GROUP_Y;
  * browser holding an older copy of the demo (guest mode, see App.tsx) is
  * switched to the current one.
  */
-export const DEMO_VERSION = 6;
+export const DEMO_VERSION = 7;
 
 /** Neutral group-frame fill/border (design tokens group-fill / group-border). */
 const GROUP_FRAME = { fill: NEUTRAL_AREA.fill, border: NEUTRAL_AREA.border };
@@ -261,21 +261,14 @@ export function buildDemoBoard(): DemoBoard {
     pipelineX += width + PIPELINE_STEP_GAP;
   });
 
-  const edges: Edge[] = [
-    // Every participant feeds Theme Finder, so the demo runs end to end.
-    ...[...TRANSCRIPTS.map((t) => t.id), DOCUMENT_TRANSCRIPT.id].map((id) => ({
-      id: `demo-edge-${id}-${PIPELINE[0].id}`,
-      source: id,
-      target: PIPELINE[0].id,
-      animated: true,
-    })),
-    ...PIPELINE.slice(0, -1).map((box, i) => ({
-      id: `demo-edge-${box.id}-${PIPELINE[i + 1].id}`,
-      source: box.id,
-      target: PIPELINE[i + 1].id,
-      animated: true,
-    })),
-  ];
+  // The pipeline steps are wired in order. The transcripts are left
+  // unconnected, so you pick which ones feed Theme Finder.
+  const edges: Edge[] = PIPELINE.slice(0, -1).map((box, i) => ({
+    id: `demo-edge-${box.id}-${PIPELINE[i + 1].id}`,
+    source: box.id,
+    target: PIPELINE[i + 1].id,
+    animated: true,
+  }));
 
   // The summary reads every pipeline box by type, so it stands alone —
   // no connectors to or from it.

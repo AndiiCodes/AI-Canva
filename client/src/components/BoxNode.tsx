@@ -19,7 +19,8 @@ import InsightWeaverOutput from "./outputs/InsightOutput.js";
 import JourneyMapperOutput from "./outputs/JourneyOutput.js";
 import SafetyReviewerOutput from "./outputs/SafetyOutputs.js";
 import CoachOutput from "./outputs/CoachOutput.js";
-import SummaryOutput, { useSummarySections } from "./outputs/SummaryOutput.js";
+import SummaryOutput, { useSummaryReport } from "./outputs/SummaryOutput.js";
+import { reportSections } from "../lib/summaryReport.js";
 import { Tooltip } from "./ui/Tooltip.js";
 import { Menu, MenuItem } from "./ui/Menu.js";
 import {
@@ -61,10 +62,11 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   const setBoxName = useBoardStore((s) => s.setBoxName);
   const isStale = useBoardStore((state) => state.isBoxStale(id));
   const allBoxData = useBoardStore((s) => s.boxData);
-  // PDF Summary: sections built live from the pipeline outputs.
-  const summarySections = useSummarySections(
+  // PDF Summary: the report built live from the pipeline outputs.
+  const summaryReport = useSummaryReport(
     ((data.boxType || type) as BoxType) === "summary",
   );
+  const summarySectionCount = reportSections(summaryReport).length;
 
   const [showSettings, setShowSettings] = useState(false);
   // Documents box: how many files are mid-extraction right now (transient UI
@@ -317,8 +319,8 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
         : null;
 
   const subtitle = isSummary
-    ? summarySections.length > 0
-      ? `${summarySections.length} ${summarySections.length === 1 ? "section" : "sections"} · updates live`
+    ? summarySectionCount > 0
+      ? `${summarySectionCount} ${summarySectionCount === 1 ? "section" : "sections"} · updates live`
       : meta.subtitle
     : isAIBox && hasTextOutput
       ? resultSummary(boxType, boxData.output, {
@@ -342,7 +344,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
     else pill = { cls: "is-waiting", label: "Waiting" };
   } else if (isSummary) {
     pill =
-      summarySections.length > 0
+      summarySectionCount > 0
         ? { cls: "", label: "Live", icon: "check" }
         : { cls: "is-waiting", label: "Waiting" };
   }
@@ -745,7 +747,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
           {/* AI box output — text (Insight Weaver, Journey Mapper, etc...). Collaboration boxes
             (timer/checklist) never produce an output, so they get neither the
             block nor its "no output yet" placeholder. */}
-          {isSummary && <SummaryOutput sections={summarySections} />}
+          {isSummary && <SummaryOutput report={summaryReport} />}
 
           {isAIBox && (
             <div className="min-h-[80px]">

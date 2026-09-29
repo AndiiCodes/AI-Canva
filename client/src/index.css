@@ -531,6 +531,12 @@ select,
 .chip-red { background: var(--red-bg); color: var(--red-text); }
 .chip-violet { height: 22px; padding: 0 8px; background: var(--violet-bg); color: var(--violet-text); font-size: 12px; font-weight: 500; }
 .chip-neutral { background: var(--surface-muted); color: var(--quote-text); font-weight: 400; font-size: 12px; }
+.chip-low { background: var(--low-bg); color: var(--low-text); }
+/* A Theme Finder mark (a positive theme), so in that step's colour. */
+.chip-insight {
+  background: color-mix(in srgb, var(--step-insight) 12%, var(--surface));
+  color: var(--step-insight);
+}
 
 /* Shared read-only quote box */
 .quote-box {
